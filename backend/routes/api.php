@@ -1,19 +1,18 @@
 <?php
 
-use App\Http\Controllers\Api\CategoryController;
-use Illuminate\Http\Request;
+use App\Http\Controllers\Api\AuthController;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| مسیرهای API پروژه
-|--------------------------------------------------------------------------
-*/
+Route::prefix('auth')->group(function () {
 
-// مسیر دریافت اطلاعات کاربر لاگین‌شده از طریق Sanctum
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+    Route::post('/register', [AuthController::class, 'register']);
 
-// مسیر دریافت دسته‌بندی‌های فعال همراه با زیردسته‌های آن‌ها
-Route::get('/categories', [CategoryController::class, 'index']);
+    Route::post('/login', [AuthController::class, 'login']);
+
+    Route::middleware('auth:sanctum')->group(function () {
+
+        Route::post('/logout', [AuthController::class, 'logout']);
+
+        Route::get('/me', [AuthController::class, 'me']);
+    });
+});
