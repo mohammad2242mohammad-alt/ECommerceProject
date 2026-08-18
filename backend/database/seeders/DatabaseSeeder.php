@@ -2,24 +2,18 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
     /**
-     * Seed the application's database.
+     * نقطه ورود اجرای تمامی سیدرهای پروژه
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        // فراخوانی سیدر دسته‌بندی‌ها برای ثبت دیتای پایه
+        $this->call([
+            CategorySeeder::class,
         ]);
     }
 }
