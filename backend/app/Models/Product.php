@@ -11,26 +11,26 @@ class Product extends Model
     use HasFactory;
 
     protected $fillable = [
+        'category_id',
         'name',
         'slug',
+        'sku',
+        'short_description',
         'description',
         'price',
         'discount_price',
-        'image',
         'stock',
-        'is_active',
-        'rating',
-        'views',
-        'category_id',
+        'status',
+        'rating_average',
+        'rating_count',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
         'discount_price' => 'decimal:2',
-        'rating' => 'decimal:1',
         'stock' => 'integer',
-        'is_active' => 'boolean',
-        'views' => 'integer',
+        'rating_average' => 'decimal:2',
+        'rating_count' => 'integer',
     ];
 
     public function category(): BelongsTo

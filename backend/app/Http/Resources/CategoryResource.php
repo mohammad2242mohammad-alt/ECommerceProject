@@ -7,38 +7,30 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class CategoryResource extends JsonResource
 {
-    /**
-     * تبدیل اطلاعات مدل دسته‌بندی به ساختار استاندارد مناسب برای API
-     */
     public function toArray(Request $request): array
     {
         return [
-            // شناسه یکتای دسته‌بندی
             'id' => $this->id,
-
-            // شناسه دسته والد؛ برای دسته‌های اصلی مقدار آن null است
             'parent_id' => $this->parent_id,
-
-            // نام دسته‌بندی
             'name' => $this->name,
-
-            // نام یکتا برای استفاده در URL و جست‌وجو
             'slug' => $this->slug,
-
-            // توضیح کوتاه دسته‌بندی
             'description' => $this->description,
-
-            // مسیر تصویر دسته‌بندی؛ فعلاً ممکن است null باشد
             'image' => $this->image,
-
-            // ترتیب نمایش دسته‌بندی در منو و لیست‌ها
             'sort_order' => $this->sort_order,
+            'is_active' => (bool) $this->is_active,
 
-            // وضعیت فعال بودن دسته‌بندی
-            'is_active' => $this->is_active,
+            'parent' => $this->whenLoaded(
+                'parent',
+                fn () => new CategoryResource($this->parent)
+            ),
 
-            // زیردسته‌ها فقط زمانی نمایش داده می‌شوند که رابطه children بارگذاری شده باشد
-            'children' => CategoryResource::collection($this->whenLoaded('children')),
+            'children' => $this->whenLoaded(
+                'children',
+                fn () => CategoryResource::collection($this->children)
+            ),
+
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
         ];
     }
 }

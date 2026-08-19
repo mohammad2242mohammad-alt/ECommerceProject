@@ -26,25 +26,16 @@ class Category extends Model
         'sort_order' => 'integer',
     ];
 
-    /**
-     * دسته والد
-     */
     public function parent(): BelongsTo
     {
         return $this->belongsTo(Category::class, 'parent_id');
     }
 
-    /**
-     * زیردسته‌ها
-     */
     public function children(): HasMany
     {
         return $this->hasMany(Category::class, 'parent_id');
     }
 
-    /**
-     * محصولات این دسته
-     */
     public function products(): HasMany
     {
         return $this->hasMany(Product::class);

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Helpers\ApiResponseHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CategoryResource;
 use App\Models\Category;
@@ -10,29 +9,44 @@ use Illuminate\Http\JsonResponse;
 
 class CategoryController extends Controller
 {
-    /**
-     * دریافت دسته‌های اصلی فعال، همراه با زیردسته‌های فعال آن‌ها
-     */
     public function index(): JsonResponse
     {
-        // دریافت دسته‌های اصلی فعال و مرتب‌سازی آن‌ها بر اساس ترتیب نمایش
-        $categories = Category::with(['children' => function ($query) {
-            // دریافت فقط زیردسته‌های فعال و مرتب‌سازی آن‌ها
-            $query->where('is_active', true)
-                ->orderBy('sort_order');
-        }])
-            ->whereNull('parent_id')
+        $categories = Category::query()
             ->where('is_active', true)
+            ->whereNull('parent_id')
+            ->with([
+                'children' => function ($query) {
+                    $query->where('is_active', true)
+                        ->orderBy('sort_order');
+                }
+            ])
             ->orderBy('sort_order')
             ->get();
 
-        // تبدیل اطلاعات دسته‌بندی‌ها به خروجی استاندارد Resource
-        $categoryResource = CategoryResource::collection($categories);
+        return response()->json([
+            'success' => true,
+            'message' => 'Success',
+            'data' => CategoryResource::collection($categories),
+        ]);
+    }
 
-        // ارسال پاسخ موفق با ساختار یکپارچه پروژه
-        return ApiResponseHelper::success(
-            data: $categoryResource,
-            message: 'لیست دسته‌بندی‌ها با موفقیت دریافت شد'
-        );
+    public function show(int $id): JsonResponse
+    {
+        $category = Category::query()
+            ->where('is_active', true)
+            ->with([
+                'parent',
+                'children' => function ($query) {
+                    $query->where('is_active', true)
+                        ->orderBy('sort_order');
+                }
+            ])
+            ->findOrFail($id);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Success',
+            'data' => new CategoryResource($category),
+        ]);
     }
 }
