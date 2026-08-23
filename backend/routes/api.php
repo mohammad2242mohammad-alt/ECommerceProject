@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\VariantValueController;
 use App\Http\Controllers\Api\ProductImageController;
 use App\Http\Controllers\Api\CartController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\OrderController;
 
 
 /*
@@ -213,4 +214,15 @@ Route::put(
 Route::delete(
     '/cart/items/{id}',
     [CartController::class, 'destroy']
+);
+
+/*
+|--------------------------------------------------------------------------
+| Orders
+|--------------------------------------------------------------------------
+*/
+
+Route::post(
+    '/orders',
+    [OrderController::class,'store']
 );
