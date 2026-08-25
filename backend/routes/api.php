@@ -1,25 +1,18 @@
 <?php
-<<<<<<< HEAD
 
 use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\CategoryController;
-use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\CategoryAttributeController;
 use App\Http\Controllers\Api\ProductAttributeValueController;
 use App\Http\Controllers\Api\ProductVariantController;
 use App\Http\Controllers\Api\VariantValueController;
 use App\Http\Controllers\Api\ProductImageController;
 use App\Http\Controllers\Api\CartController;
-=======
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ProductController;
 use Illuminate\Http\Request;
->>>>>>> b085672 (feat: complete product api backend foundation)
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\OrderController;
 
-
-<<<<<<< HEAD
 /*
 |--------------------------------------------------------------------------
 | Authentication
@@ -233,15 +226,3 @@ Route::post(
     '/orders',
     [OrderController::class,'store']
 );
-=======
-// دریافت اطلاعات کاربر لاگین‌شده
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
-
-// دریافت دسته‌بندی‌ها
-Route::get('/categories', [CategoryController::class, 'index']);
-
-// دریافت محصولات
-Route::get('/products', [ProductController::class, 'index']);
->>>>>>> b085672 (feat: complete product api backend foundation)
