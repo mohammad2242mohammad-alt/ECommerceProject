@@ -1,70 +1,75 @@
+﻿import '../../core/constants/api_constants.dart';
+import '../../core/network/api_client.dart';
 import '../models/product_model.dart';
 
-
-/// سرویس محصولات
-///
-/// فعلاً اطلاعات تستی برمی‌گرداند.
-/// بعداً این بخش به Laravel API وصل می‌شود.
 class ProductService {
+  ProductService({ApiClient? apiClient})
+      : _apiClient = apiClient ?? ApiClient();
 
+  final ApiClient _apiClient;
 
-  Future<List<ProductModel>> getProducts() async {
+  Future<List<ProductModel>> getProducts({
+    int? categoryId,
+    String? search,
+    int? page,
+    int? perPage,
+    String? sort,
+    int? minPrice,
+    int? maxPrice,
+  }) async {
+    final queryParameters = <String, String>{};
 
+    if (categoryId != null) {
+      queryParameters['category_id'] = categoryId.toString();
+    }
 
-    return [
+    if (search != null && search.trim().isNotEmpty) {
+      queryParameters['search'] = search.trim();
+    }
 
+    if (page != null) {
+      queryParameters['page'] = page.toString();
+    }
 
-      ProductModel(
+    if (perPage != null) {
+      queryParameters['per_page'] = perPage.toString();
+    }
 
-        id: 1,
+    if (sort != null && sort.isNotEmpty) {
+      queryParameters['sort'] = sort;
+    }
 
-        name: 'Samsung Galaxy A55',
+    if (minPrice != null) {
+      queryParameters['min_price'] = minPrice.toString();
+    }
 
-        description: 'گوشی موبایل سامسونگ با کیفیت بالا',
+    if (maxPrice != null) {
+      queryParameters['max_price'] = maxPrice.toString();
+    }
 
-        price: 18000000,
+    final response = await _apiClient.get<Map<String, dynamic>>(
+      ApiConstants.products,
+      queryParameters: queryParameters,
+    );
 
-        image: 'assets/images/a55.png',
+    final data = response.data;
 
-      ),
+    if (data == null) {
+      return [];
+    }
 
+    final items = data['items'];
 
+    if (items is! List) {
+      return [];
+    }
 
-      ProductModel(
-
-        id: 2,
-
-        name: 'ASUS VivoBook',
-
-        description: 'لپ تاپ مناسب کار و دانشگاه',
-
-        price: 32000000,
-
-        image: 'assets/images/laptop.png',
-
-      ),
-
-
-
-      ProductModel(
-
-        id: 3,
-
-        name: 'Wireless Headphone',
-
-        description: 'هدفون بی سیم با کیفیت صدا عالی',
-
-        price: 2500000,
-
-        image: 'assets/images/headphone.png',
-
-      ),
-
-
-    ];
-
-
+    return items
+        .map(
+          (item) => ProductModel.fromJson(
+            item as Map<String, dynamic>,
+          ),
+        )
+        .toList();
   }
-
-
 }

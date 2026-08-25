@@ -1,16 +1,19 @@
-import 'package:flutter/material.dart';
-import '../../../data/models/product_model.dart';
-import '../../../data/services/product_service.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../providers/product_provider.dart';
+import '../../../shared/widgets/app_empty.dart';
+import '../../../shared/widgets/app_error.dart';
+import '../../../shared/widgets/app_loading.dart';
 import '../../products/widgets/product_card.dart';
-/// بخش نمایش محصولات ویژه صفحه اصلی
-///
-/// فعلاً اطلاعات از ProductService آزمایشی دریافت می‌شود.
-/// در آینده همین بخش از Laravel API اطلاعات می‌گیرد.
-class ProductSection extends StatelessWidget {
+
+class ProductSection extends ConsumerWidget {
   const ProductSection({super.key});
+
   @override
-  Widget build(BuildContext context) {
-    final ProductService service = ProductService();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final productsAsync = ref.watch(productsProvider);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -22,41 +25,55 @@ class ProductSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        FutureBuilder<List<ProductModel>>(
-          future: service.getProducts(),
-          builder: (context, snapshot) {
-            // هنگام دریافت اطلاعات
-            if (!snapshot.hasData) {
-              return const Center(
-                child: CircularProgressIndicator(),
+
+        productsAsync.when(
+          loading: () => const AppLoading(),
+
+          error: (error, stackTrace) {
+            debugPrint('PRODUCT ERROR: $error');
+            debugPrint('PRODUCT STACK: $stackTrace');
+
+            return AppError(
+              message: 'خطا در دریافت محصولات',
+              onRetry: () {
+                ref.invalidate(productsProvider);
+              },
+            );
+          },
+
+          data: (products) {
+            if (products.isEmpty) {
+              return const AppEmpty(
+                message: 'محصولی برای نمایش وجود ندارد',
+                icon: Icons.inventory_2_outlined,
               );
             }
-            final products = snapshot.data!;
+
             return GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: products.length,
               gridDelegate:
-              const SliverGridDelegateWithFixedCrossAxisCount(
+                  const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
                 childAspectRatio: 0.65,
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
               ),
               itemBuilder: (context, index) {
-                final ProductModel product = products[index];
+                final product = products[index];
+
                 return ProductCard(
-                title: product.name,
-                price: '${product.price} تومان',
-                image: product.image,
-                rating: 4.5,
-               );
+                  title: product.name,
+                  price: product.price.toString(),
+                  image: product.image ?? '',
+                  rating: product.rating,
+                );
               },
             );
           },
         ),
       ],
-
     );
   }
 }

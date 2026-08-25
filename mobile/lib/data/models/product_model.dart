@@ -1,68 +1,81 @@
-// مدل محصول فروشگاه
-//
-// این کلاس ساختار اطلاعات یک محصول را مشخص می‌کند.
-// بعداً اطلاعات از Laravel API دریافت می‌شود.
-
+/// مدل اطلاعات محصول فروشگاه.
 class ProductModel {
-
-
-  // شناسه محصول
   final int id;
-
-
-  // نام محصول
   final String name;
-
-
-  // توضیحات محصول
   final String description;
-
-
-  // قیمت محصول
   final int price;
+  final int? discountPrice;
+  final String? image;
+  final int stock;
+  final bool isActive;
+  final double rating;
+  final int views;
+  final int? categoryId;
+  final int? brandId;
 
-
-  // تصویر محصول
-  final String image;
-
-
-
-  // سازنده مدل محصول
   const ProductModel({
-
     required this.id,
-
     required this.name,
-
     required this.description,
-
     required this.price,
-
+    required this.discountPrice,
     required this.image,
-
+    required this.stock,
+    required this.isActive,
+    required this.rating,
+    required this.views,
+    required this.categoryId,
+    required this.brandId,
   });
 
-
-
-  // تبدیل JSON دریافتی از API به مدل Flutter
   factory ProductModel.fromJson(Map<String, dynamic> json) {
-
-
     return ProductModel(
+      id: int.tryParse(json['id'].toString()) ?? 0,
+      name: json['name']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
 
-      id: json['id'],
+      price: double.tryParse(
+            json['price']?.toString() ?? '',
+          )?.toInt() ??
+          0,
 
-      name: json['name'],
+      discountPrice: json['discount_price'] == null
+          ? null
+          : double.tryParse(
+              json['discount_price'].toString(),
+            )?.toInt(),
 
-      description: json['description'],
+      image: json['image']?.toString(),
 
-      price: json['price'],
+      stock: int.tryParse(
+            json['stock'].toString(),
+          ) ??
+          0,
 
-      image: json['image'],
+      isActive: json['is_active'] == true ||
+          json['is_active'].toString() == '1',
 
+      rating: double.tryParse(
+            json['rating']?.toString() ?? '',
+          ) ??
+          0.0,
+
+      views: int.tryParse(
+            json['views'].toString(),
+          ) ??
+          0,
+
+      categoryId: json['category_id'] == null
+          ? null
+          : int.tryParse(
+              json['category_id'].toString(),
+            ),
+
+      brandId: json['brand_id'] == null
+          ? null
+          : int.tryParse(
+              json['brand_id'].toString(),
+            ),
     );
-
   }
-
-
 }

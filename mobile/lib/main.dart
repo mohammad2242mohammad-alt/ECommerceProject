@@ -1,6 +1,7 @@
 // ابزارها و Widgetهای اصلی Flutter Material را وارد می‌کنیم.
 import 'package:flutter/material.dart';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 // Theme مرکزی پروژه را از مسیر core وارد می‌کنیم.
 // تمام تنظیمات ظاهری برنامه در این فایل مدیریت می‌شود.
 import 'core/theme/app_theme.dart';
@@ -14,7 +15,11 @@ import 'core/routes/app_routes.dart';
 void main() {
 
   // اجرای Widget اصلی برنامه.
-  runApp(const EcommerceApp());
+   runApp(
+    const ProviderScope(
+      child: EcommerceApp(),
+    ),
+  );
 }
 
 
