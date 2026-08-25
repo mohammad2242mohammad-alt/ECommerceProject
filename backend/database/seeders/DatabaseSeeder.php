@@ -13,7 +13,8 @@ class DatabaseSeeder extends Seeder
     {
         // فراخوانی سیدر دسته‌بندی‌ها برای ثبت دیتای پایه
         $this->call([
-            CategorySeeder::class,
-        ]);
+             CategorySeeder::class,
+             ProductSeeder::class,
+           ]);
     }
 }
