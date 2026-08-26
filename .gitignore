@@ -1,0 +1,26 @@
+# Flutter
+**/.dart_tool/
+**/build/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.packages
+**/pubspec.lock
+
+# Laravel
+backend/.env
+backend/.env.*
+!backend/.env.example
+backend/vendor/
+backend/storage/*.key
+backend/storage/app/
+backend/storage/framework/
+backend/storage/logs/
+backend/bootstrap/cache/
+backend/database/*.sqlite
+
+# IDE / OS
+.vscode/
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
