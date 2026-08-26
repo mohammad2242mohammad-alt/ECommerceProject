@@ -1,0 +1,27 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Order extends Model
+{
+
+    protected $fillable = [
+
+        'user_id',
+        'session_id',
+        'status',
+        'subtotal',
+        'discount',
+        'total'
+
+    ];
+
+
+    public function items()
+    {
+        return $this->hasMany(OrderItem::class);
+    }
+
+}
