@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CheckoutController;
 use App\Http\Controllers\Api\CouponController;
 use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ProductAttributeValueController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\ProductImageController;
@@ -211,25 +212,82 @@ Route::post(
 
 /*
 |--------------------------------------------------------------------------
-| Addresses
+| Authenticated Customer APIs
 |--------------------------------------------------------------------------
 */
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/addresses', [AddressController::class, 'index']);
-    Route::post('/addresses', [AddressController::class, 'store']);
-    Route::get('/addresses/{id}', [AddressController::class, 'show']);
-    Route::put('/addresses/{id}', [AddressController::class, 'update']);
-    Route::delete('/addresses/{id}', [AddressController::class, 'destroy']);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Addresses
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get(
+        '/addresses',
+        [AddressController::class, 'index']
+    );
+
+    Route::post(
+        '/addresses',
+        [AddressController::class, 'store']
+    );
+
+    Route::get(
+        '/addresses/{id}',
+        [AddressController::class, 'show']
+    );
+
+    Route::put(
+        '/addresses/{id}',
+        [AddressController::class, 'update']
+    );
+
+    Route::delete(
+        '/addresses/{id}',
+        [AddressController::class, 'destroy']
+    );
+
+    /*
+    |--------------------------------------------------------------------------
+    | Orders
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get(
+        '/orders',
+        [OrderController::class, 'index']
+    );
+
+    Route::post(
+        '/orders',
+        [OrderController::class, 'store']
+    );
+
+    Route::get(
+        '/orders/{id}',
+        [OrderController::class, 'show']
+    );
+
+    Route::post(
+        '/orders/{id}/cancel',
+        [OrderController::class, 'cancel']
+    );
+
+    /*
+    |--------------------------------------------------------------------------
+    | Payments
+    |--------------------------------------------------------------------------
+    */
+
+    Route::post(
+        '/payments/{orderId}/start',
+        [PaymentController::class, 'start']
+    );
+
+    Route::get(
+        '/payments/{orderId}/status',
+        [PaymentController::class, 'status']
+    );
 });
-
-/*
-|--------------------------------------------------------------------------
-| Orders
-|--------------------------------------------------------------------------
-*/
-
-Route::post(
-    '/orders',
-    [OrderController::class, 'store']
-);

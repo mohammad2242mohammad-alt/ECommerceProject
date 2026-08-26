@@ -6,28 +6,25 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * افزودن رابطه والد/زیردسته به دسته‌بندی‌ها
-     */
     public function up(): void
     {
-        Schema::table('categories', function (Blueprint $table) {
-            $table->foreignId('parent_id')
-                ->nullable()
-                ->after('id')
-                ->constrained('categories')
-                ->nullOnDelete();
-        });
+        if (!Schema::hasColumn('categories', 'parent_id')) {
+            Schema::table('categories', function (Blueprint $table) {
+                $table->unsignedBigInteger('parent_id')
+                    ->nullable()
+                    ->after('id');
+
+                $table->foreign('parent_id')
+                    ->references('id')
+                    ->on('categories')
+                    ->nullOnDelete();
+            });
+        }
     }
 
-    /**
-     * حذف رابطه والد/زیردسته
-     */
     public function down(): void
     {
-        Schema::table('categories', function (Blueprint $table) {
-            $table->dropForeign(['parent_id']);
-            $table->dropColumn('parent_id');
-        });
+        // Intentionally left empty.
+        // parent_id may already belong to the original categories schema.
     }
 };
