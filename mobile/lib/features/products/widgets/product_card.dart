@@ -1,21 +1,20 @@
 import 'package:flutter/material.dart';
 
+import '../../../data/models/product_model.dart';
+
 class ProductCard extends StatelessWidget {
-  final String title;
-  final String price;
-  final String image;
-  final double rating;
+  final ProductModel product;
 
   const ProductCard({
     super.key,
-    required this.title,
-    required this.price,
-    required this.image,
-    required this.rating,
+    required this.product,
   });
 
   @override
   Widget build(BuildContext context) {
+    final hasDiscount = product.discountPrice != null &&
+        product.discountPrice! < product.price;
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -48,14 +47,13 @@ class ProductCard extends StatelessWidget {
               ),
             ),
           ),
-
           Padding(
             padding: const EdgeInsets.all(10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
+                  product.name,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -63,9 +61,7 @@ class ProductCard extends StatelessWidget {
                     fontSize: 15,
                   ),
                 ),
-
                 const SizedBox(height: 8),
-
                 Row(
                   children: [
                     const Icon(
@@ -75,21 +71,38 @@ class ProductCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      rating.toString(),
-                      style: const TextStyle(fontSize: 13),
+                      (product.ratingAverage ?? 0).toString(),
+                      style: const TextStyle(
+                        fontSize: 13,
+                      ),
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 8),
-
-                Text(
-                  '$price تومان',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                if (hasDiscount) ...[
+                  Text(
+                    '${product.price} تومان',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      decoration: TextDecoration.lineThrough,
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${product.discountPrice} تومان',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ] else
+                  Text(
+                    '${product.price} تومان',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
               ],
             ),
           ),

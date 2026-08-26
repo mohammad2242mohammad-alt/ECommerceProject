@@ -17,7 +17,7 @@ class ProductController extends Controller
 
         $query = Product::query()
             ->with(['category', 'brand'])
-            ->where('status', 'active');
+            ->where('is_active', 1);
 
 
         if (!empty($validated['category_id'])) {
@@ -65,7 +65,7 @@ class ProductController extends Controller
                 break;
 
             case 'rating_desc':
-                $query->orderBy('rating_average', 'desc');
+                $query->orderBy('rating', 'desc');
                 break;
 
             default:
@@ -100,6 +100,7 @@ class ProductController extends Controller
                     'to' => $products->lastItem(),
 
                 ],
+
             ],
 
         ]);
@@ -109,6 +110,7 @@ class ProductController extends Controller
 
     public function show($id): JsonResponse
     {
+
         $product = Product::with([
 
             'category',
@@ -118,7 +120,7 @@ class ProductController extends Controller
             'variants.values.attribute'
 
         ])
-        ->where('status', 'active')
+        ->where('is_active', 1)
         ->findOrFail($id);
 
 
