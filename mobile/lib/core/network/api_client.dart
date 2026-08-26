@@ -6,6 +6,11 @@ import '../constants/api_constants.dart';
 import '../errors/app_exception.dart';
 import 'models/api_response.dart';
 
+/// کلاینت مرکزی ارتباط Flutter با REST API.
+///
+/// تمام درخواست‌های HTTP پروژه باید از این لایه عبور کنند
+/// تا مدیریت Header، خطا، JSON و پاسخ استاندارد API
+/// در یک نقطه انجام شود.
 class ApiClient {
   ApiClient({
     http.Client? client,
@@ -13,6 +18,12 @@ class ApiClient {
 
   final http.Client _client;
 
+  /// ارسال درخواست GET به Backend.
+  ///
+  /// [endpoint] مسیر API است.
+  /// [queryParameters] پارامترهای Query String را مشخص می‌کند.
+  /// [headers] Headerهای اضافی درخواست را مشخص می‌کند.
+  /// [fromData] برای تبدیل بخش data به مدل موردنظر استفاده می‌شود.
   Future<ApiResponse<T>> get<T>(
     String endpoint, {
     Map<String, String>? queryParameters,
@@ -37,6 +48,92 @@ class ApiClient {
           'Accept': 'application/json',
           ...?headers,
         },
+      );
+    } catch (e) {
+      throw NetworkException(
+        'خطا در برقراری ارتباط با سرور',
+        code: 'NETWORK_ERROR',
+      );
+    }
+
+    if (response.statusCode >= 500) {
+      throw ServerException(
+        'خطا در سرور',
+        code: response.statusCode.toString(),
+      );
+    }
+
+    if (response.statusCode < 200 ||
+        response.statusCode >= 300) {
+      throw ApiException(
+        'خطا در درخواست API',
+        code: response.statusCode.toString(),
+      );
+    }
+
+    final dynamic decoded;
+
+    try {
+      decoded = jsonDecode(response.body);
+    } catch (e) {
+      throw ParseException(
+        'پاسخ سرور قابل پردازش نیست',
+        code: 'INVALID_JSON',
+      );
+    }
+
+    if (decoded is! Map<String, dynamic>) {
+      throw ParseException(
+        'فرمت پاسخ API نامعتبر است',
+        code: 'INVALID_RESPONSE',
+      );
+    }
+
+    final apiResponse = ApiResponse<T>.fromJson(
+      decoded,
+      fromData: fromData,
+    );
+
+    if (!apiResponse.success) {
+      throw ApiException(
+        apiResponse.message ?? 'درخواست API ناموفق بود',
+        code: 'API_ERROR',
+      );
+    }
+
+    return apiResponse;
+  }
+
+  /// ارسال درخواست POST به Backend.
+  ///
+  /// برای عملیات‌هایی مانند Login، Register، افزودن به سبد،
+  /// ایجاد سفارش و شروع پرداخت استفاده خواهد شد.
+  ///
+  /// [endpoint] مسیر API است.
+  /// [body] داده‌هایی است که در قالب JSON به Backend ارسال می‌شود.
+  /// [headers] Headerهای اضافی درخواست را مشخص می‌کند.
+  /// [fromData] برای تبدیل بخش data به مدل موردنظر استفاده می‌شود.
+  Future<ApiResponse<T>> post<T>(
+    String endpoint, {
+    Map<String, dynamic>? body,
+    Map<String, String>? headers,
+    T Function(dynamic)? fromData,
+  }) async {
+    final uri = Uri.parse(
+      '${ApiConstants.baseUrl}$endpoint',
+    );
+
+    late http.Response response;
+
+    try {
+      response = await _client.post(
+        uri,
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          ...?headers,
+        },
+        body: body == null ? null : jsonEncode(body),
       );
     } catch (e) {
       throw NetworkException(

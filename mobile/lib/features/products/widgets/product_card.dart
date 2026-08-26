@@ -2,7 +2,15 @@ import 'package:flutter/material.dart';
 
 import '../../../data/models/product_model.dart';
 
+/// کارت نمایش خلاصه اطلاعات یک محصول.
+///
+/// این Widget فقط مسئول نمایش اطلاعات محصول است و
+/// هیچ درخواست مستقیمی به API ارسال نمی‌کند.
+///
+/// داده محصول از لایه بالاتر و از طریق [ProductModel]
+/// به این Widget ارسال می‌شود.
 class ProductCard extends StatelessWidget {
+  /// اطلاعات محصولی که باید در کارت نمایش داده شود.
   final ProductModel product;
 
   const ProductCard({
@@ -12,6 +20,11 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // بررسی می‌کنیم که آیا محصول تخفیف معتبر دارد یا خیر.
+    //
+    // تخفیف فقط زمانی معتبر است که:
+    // 1. discountPrice وجود داشته باشد.
+    // 2. قیمت تخفیف‌خورده از قیمت اصلی کمتر باشد.
     final hasDiscount = product.discountPrice != null &&
         product.discountPrice! < product.price;
 
@@ -30,6 +43,11 @@ class ProductCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // بخش تصویر محصول.
+          //
+          // فعلاً تصویر واقعی را متصل نمی‌کنیم؛
+          // در مراحل بعدی ProductImage و API تصاویر را
+          // طبق Contract پروژه اضافه خواهیم کرد.
           ClipRRect(
             borderRadius: const BorderRadius.vertical(
               top: Radius.circular(16),
@@ -47,11 +65,17 @@ class ProductCard extends StatelessWidget {
               ),
             ),
           ),
+
+          // اطلاعات متنی محصول.
           Padding(
             padding: const EdgeInsets.all(10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // نام محصول.
+                //
+                // حداکثر دو خط نمایش داده می‌شود تا
+                // ارتفاع کارت بیش از حد افزایش پیدا نکند.
                 Text(
                   product.name,
                   maxLines: 2,
@@ -61,7 +85,10 @@ class ProductCard extends StatelessWidget {
                     fontSize: 15,
                   ),
                 ),
+
                 const SizedBox(height: 8),
+
+                // امتیاز محصول.
                 Row(
                   children: [
                     const Icon(
@@ -78,7 +105,14 @@ class ProductCard extends StatelessWidget {
                     ),
                   ],
                 ),
+
                 const SizedBox(height: 8),
+
+                // نمایش قیمت.
+                //
+                // اگر محصول تخفیف داشته باشد:
+                // قیمت اصلی خط‌خورده نمایش داده می‌شود
+                // و قیمت تخفیف‌خورده زیر آن قرار می‌گیرد.
                 if (hasDiscount) ...[
                   Text(
                     '${product.price} تومان',
@@ -96,6 +130,8 @@ class ProductCard extends StatelessWidget {
                     ),
                   ),
                 ] else
+                  // اگر تخفیفی وجود نداشته باشد،
+                  // فقط قیمت اصلی نمایش داده می‌شود.
                   Text(
                     '${product.price} تومان',
                     style: const TextStyle(
