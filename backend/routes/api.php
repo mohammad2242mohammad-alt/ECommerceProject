@@ -1,17 +1,19 @@
 <?php
 
+use App\Http\Controllers\Api\AddressController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\CategoryAttributeController;
+use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\CheckoutController;
+use App\Http\Controllers\Api\CouponController;
+use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProductAttributeValueController;
+use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\ProductImageController;
 use App\Http\Controllers\Api\ProductVariantController;
 use App\Http\Controllers\Api\VariantValueController;
-use App\Http\Controllers\Api\ProductImageController;
-use App\Http\Controllers\Api\CartController;
-use App\Http\Controllers\Api\CategoryController;
-use App\Http\Controllers\Api\ProductController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\OrderController;
 
 /*
 |--------------------------------------------------------------------------
@@ -20,23 +22,14 @@ use App\Http\Controllers\Api\OrderController;
 */
 
 Route::prefix('auth')->group(function () {
-
     Route::post('/register', [AuthController::class, 'register']);
-
     Route::post('/login', [AuthController::class, 'login']);
 
-
     Route::middleware('auth:sanctum')->group(function () {
-
         Route::post('/logout', [AuthController::class, 'logout']);
-
         Route::get('/me', [AuthController::class, 'me']);
-
     });
-
 });
-
-
 
 /*
 |--------------------------------------------------------------------------
@@ -45,10 +38,7 @@ Route::prefix('auth')->group(function () {
 */
 
 Route::get('/categories', [CategoryController::class, 'index']);
-
 Route::get('/categories/{id}', [CategoryController::class, 'show']);
-
-
 
 /*
 |--------------------------------------------------------------------------
@@ -76,8 +66,6 @@ Route::delete(
     [CategoryAttributeController::class, 'destroy']
 );
 
-
-
 /*
 |--------------------------------------------------------------------------
 | Products
@@ -85,10 +73,7 @@ Route::delete(
 */
 
 Route::get('/products', [ProductController::class, 'index']);
-
 Route::get('/products/{id}', [ProductController::class, 'show']);
-
-
 
 /*
 |--------------------------------------------------------------------------
@@ -105,8 +90,6 @@ Route::post(
     '/products/{productId}/attributes',
     [ProductAttributeValueController::class, 'store']
 );
-
-
 
 /*
 |--------------------------------------------------------------------------
@@ -128,8 +111,6 @@ Route::delete(
     '/images/{id}',
     [ProductImageController::class, 'destroy']
 );
-
-
 
 /*
 |--------------------------------------------------------------------------
@@ -157,8 +138,6 @@ Route::delete(
     [ProductVariantController::class, 'destroy']
 );
 
-
-
 /*
 |--------------------------------------------------------------------------
 | Variant Values
@@ -185,36 +164,64 @@ Route::delete(
     [VariantValueController::class, 'destroy']
 );
 
-
-
 /*
 |--------------------------------------------------------------------------
 | Cart
 |--------------------------------------------------------------------------
 */
 
-Route::get(
-    '/cart',
-    [CartController::class, 'index']
-);
-
+Route::get('/cart', [CartController::class, 'index']);
 
 Route::post(
     '/cart/items',
     [CartController::class, 'store']
 );
 
-
 Route::put(
     '/cart/items/{id}',
     [CartController::class, 'update']
 );
 
-
 Route::delete(
     '/cart/items/{id}',
     [CartController::class, 'destroy']
 );
+
+/*
+|--------------------------------------------------------------------------
+| Coupon
+|--------------------------------------------------------------------------
+*/
+
+Route::post(
+    '/coupons/validate',
+    [CouponController::class, 'validateCoupon']
+);
+
+/*
+|--------------------------------------------------------------------------
+| Checkout
+|--------------------------------------------------------------------------
+*/
+
+Route::post(
+    '/checkout/calculate',
+    [CheckoutController::class, 'calculate']
+);
+
+/*
+|--------------------------------------------------------------------------
+| Addresses
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/addresses', [AddressController::class, 'index']);
+    Route::post('/addresses', [AddressController::class, 'store']);
+    Route::get('/addresses/{id}', [AddressController::class, 'show']);
+    Route::put('/addresses/{id}', [AddressController::class, 'update']);
+    Route::delete('/addresses/{id}', [AddressController::class, 'destroy']);
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -224,5 +231,5 @@ Route::delete(
 
 Route::post(
     '/orders',
-    [OrderController::class,'store']
+    [OrderController::class, 'store']
 );

@@ -7,15 +7,15 @@ use App\Models\Cart;
 use App\Services\CheckoutService;
 use Illuminate\Http\Request;
 
-class CouponController extends Controller
+class CheckoutController extends Controller
 {
-    public function validateCoupon(
+    public function calculate(
         Request $request,
         CheckoutService $checkoutService
     ) {
         $validated = $request->validate([
-            'code' => 'required|string',
-            'session_id' => 'required|string'
+            'session_id' => 'required|string',
+            'coupon_code' => 'nullable|string'
         ]);
 
         $cart = Cart::with('items')
@@ -32,24 +32,27 @@ class CouponController extends Controller
 
         $result = $checkoutService->calculate(
             $cart,
-            $validated['code'],
+            $validated['coupon_code'] ?? null,
             $request->user()?->id
         );
 
         return response()->json([
             'success' => true,
-            'message' => 'Coupon validated successfully',
+            'message' => 'Checkout calculated successfully',
             'data' => [
-                'coupon' => [
-                    'code' => $result['coupon']->code,
-                    'type' => $result['coupon']->type,
-                    'value' => $result['coupon']->value
-                ],
-
                 'subtotal' => $result['subtotal'],
                 'discount' => $result['discount'],
                 'shipping' => $result['shipping'],
-                'total' => $result['total']
+                'total' => $result['total'],
+
+                'coupon' => $result['coupon']
+                    ? [
+                        'id' => $result['coupon']->id,
+                        'code' => $result['coupon']->code,
+                        'type' => $result['coupon']->type,
+                        'value' => $result['coupon']->value
+                    ]
+                    : null
             ]
         ]);
     }
