@@ -21,7 +21,7 @@ class ProductsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(categoryId == null ? 'محصولات' : 'محصولات دسته'),
+        title: Text(categoryId == null ? 'محصولات' : 'محصولات دسته‌بندی'),
         centerTitle: true,
       ),
       body: Padding(
