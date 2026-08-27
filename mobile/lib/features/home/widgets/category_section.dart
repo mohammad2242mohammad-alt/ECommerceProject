@@ -16,23 +16,41 @@ class CategorySection extends ConsumerWidget {
     int categoryId,
   ) async {
     if (kIsWeb) {
-      // Keep the URL shareable and open the category in a separate browser tab.
+      // Flutter Web's default URL strategy uses a hash route. Keep the
+      // current app URL and open the category route in a new browser tab.
       final current = Uri.base;
-      final uri = current.replace(
-        path: '/products',
-        queryParameters: {'category_id': categoryId.toString()},
+      final uri = Uri(
+        scheme: current.scheme,
+        userInfo: current.userInfo,
+        host: current.host,
+        port: current.hasPort ? current.port : null,
+        path: current.path,
+        fragment: '/products?category_id=$categoryId',
       );
 
-      await launchUrl(uri, webOnlyWindowName: '_blank');
+      final opened = await launchUrl(
+        uri,
+        webOnlyWindowName: '_blank',
+      );
+
+      if (!opened && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('باز کردن صفحه دسته‌بندی ممکن نشد'),
+          ),
+        );
+      }
       return;
     }
 
     // On Android/iOS/desktop, use the app's own navigation.
-    Navigator.pushNamed(
-      context,
-      '/products',
-      arguments: categoryId,
-    );
+    if (context.mounted) {
+      Navigator.pushNamed(
+        context,
+        '/products',
+        arguments: categoryId,
+      );
+    }
   }
 
   @override
