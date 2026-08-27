@@ -72,138 +72,144 @@ class CategoryScreen extends ConsumerWidget {
               ref.invalidate(popularProductsByCategoryProvider(categoryId));
               await ref.read(categoriesProvider.future);
             },
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
-              children: [
-                Text(
-                  category.name,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                if (category.description != null &&
-                    category.description!.trim().isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    category.description!,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey.shade600,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final width = constraints.maxWidth;
+                final productColumns = width >= 1200
+                    ? 5
+                    : width >= 900
+                        ? 4
+                        : width >= 600
+                            ? 3
+                            : 2;
+
+                return ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+                  children: [
+                    Text(
+                      category.name,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                ],
-                if (category.children.isNotEmpty) ...[
-                  const SizedBox(height: 24),
-                  const Text(
-                    'زیر دسته‌ها',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  SizedBox(
-                    height: 108,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: category.children.length,
-                      separatorBuilder: (_, __) =>
-                          const SizedBox(width: 12),
-                      itemBuilder: (context, index) {
-                        final child = category.children[index];
-                        return SizedBox(
-                          width: 100,
-                          child: Card(
-                            margin: EdgeInsets.zero,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              side: BorderSide(
-                                color: Colors.grey.shade200,
-                              ),
-                            ),
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(14),
-                              onTap: () {
-                                Navigator.pushNamed(
-                                  context,
-                                  '/products',
-                                  arguments: child.id,
-                                );
-                              },
-                              child: Center(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8),
-                                  child: Text(
-                                    child.name,
-                                    maxLines: 2,
-                                    textAlign: TextAlign.center,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
+                    if (category.description != null &&
+                        category.description!.trim().isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        category.description!,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                    if (category.children.isNotEmpty) ...[
+                      const SizedBox(height: 24),
+                      SizedBox(
+                        height: 108,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: category.children.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(width: 12),
+                          itemBuilder: (context, index) {
+                            final child = category.children[index];
+                            return SizedBox(
+                              width: 100,
+                              child: Card(
+                                margin: EdgeInsets.zero,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  side: BorderSide(
+                                    color: Colors.grey.shade200,
+                                  ),
+                                ),
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(14),
+                                  onTap: () {
+                                    Navigator.pushNamed(
+                                      context,
+                                      '/products',
+                                      arguments: child.id,
+                                    );
+                                  },
+                                  child: Center(
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8),
+                                      child: Text(
+                                        child.name,
+                                        maxLines: 2,
+                                        textAlign: TextAlign.center,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
-                            ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 28),
+                    const Text(
+                      'محصولات محبوب',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    productsAsync.when(
+                      loading: () => const SizedBox(
+                        height: 180,
+                        child: AppLoading(),
+                      ),
+                      error: (error, stackTrace) {
+                        debugPrint('POPULAR PRODUCTS ERROR: $error');
+                        debugPrint('POPULAR PRODUCTS STACK: $stackTrace');
+                        return AppError(
+                          message: 'خطا در دریافت محصولات محبوب',
+                          onRetry: () => ref.invalidate(
+                            popularProductsByCategoryProvider(categoryId),
+                          ),
+                        );
+                      },
+                      data: (products) {
+                        if (products.isEmpty) {
+                          return const AppEmpty(
+                            message: 'در این دسته هنوز محصولی وجود ندارد',
+                            icon: Icons.inventory_2_outlined,
+                          );
+                        }
+
+                        return GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: products.length,
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: productColumns,
+                            childAspectRatio: 0.72,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                          ),
+                          itemBuilder: (context, index) => ProductCard(
+                            product: products[index],
                           ),
                         );
                       },
                     ),
-                  ),
-                ],
-                const SizedBox(height: 28),
-                const Text(
-                  'محصولات محبوب',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                productsAsync.when(
-                  loading: () => const SizedBox(
-                    height: 180,
-                    child: AppLoading(),
-                  ),
-                  error: (error, stackTrace) {
-                    debugPrint('POPULAR PRODUCTS ERROR: $error');
-                    debugPrint('POPULAR PRODUCTS STACK: $stackTrace');
-                    return AppError(
-                      message: 'خطا در دریافت محصولات محبوب',
-                      onRetry: () => ref.invalidate(
-                        popularProductsByCategoryProvider(categoryId),
-                      ),
-                    );
-                  },
-                  data: (products) {
-                    if (products.isEmpty) {
-                      return const AppEmpty(
-                        message: 'در این دسته هنوز محصولی وجود ندارد',
-                        icon: Icons.inventory_2_outlined,
-                      );
-                    }
-
-                    return GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: products.length,
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: 0.65,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                      ),
-                      itemBuilder: (context, index) => ProductCard(
-                        product: products[index],
-                      ),
-                    );
-                  },
-                ),
-              ],
+                  ],
+                );
+              },
             ),
           );
         },
