@@ -8,22 +8,26 @@ import '../../../shared/widgets/app_loading.dart';
 import '../widgets/product_card.dart';
 
 class ProductsScreen extends ConsumerWidget {
-  const ProductsScreen({super.key});
+  const ProductsScreen({
+    super.key,
+    this.categoryId,
+  });
+
+  final int? categoryId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final productsAsync = ref.watch(productsProvider);
+    final productsAsync = ref.watch(productsProvider(categoryId));
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('محصولات'),
+        title: Text(categoryId == null ? 'محصولات' : 'محصولات دسته'),
         centerTitle: true,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: productsAsync.when(
           loading: () => const AppLoading(),
-
           error: (error, stackTrace) {
             debugPrint('PRODUCTS SCREEN ERROR: $error');
             debugPrint('PRODUCTS SCREEN STACK: $stackTrace');
@@ -31,15 +35,14 @@ class ProductsScreen extends ConsumerWidget {
             return AppError(
               message: 'خطا در دریافت محصولات',
               onRetry: () {
-                ref.invalidate(productsProvider);
+                ref.invalidate(productsProvider(categoryId));
               },
             );
           },
-
           data: (products) {
             if (products.isEmpty) {
               return const AppEmpty(
-                message: 'محصولی برای نمایش وجود ندارد',
+                message: 'محصولی در این دسته وجود ندارد',
                 icon: Icons.inventory_2_outlined,
               );
             }
@@ -54,11 +57,7 @@ class ProductsScreen extends ConsumerWidget {
                 mainAxisSpacing: 12,
               ),
               itemBuilder: (context, index) {
-                final product = products[index];
-
-                return ProductCard(
-                  product: product,
-                );
+                return ProductCard(product: products[index]);
               },
             );
           },
