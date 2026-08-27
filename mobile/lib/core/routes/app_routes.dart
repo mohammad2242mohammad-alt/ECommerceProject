@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../features/categories/screens/category_screen.dart';
 import '../../features/home/screens/home_screen.dart';
 import '../../features/products/screens/products_screen.dart';
 
@@ -7,6 +8,7 @@ class AppRoutes {
   AppRoutes._();
 
   static const String home = '/';
+  static const String category = '/category';
   static const String products = '/products';
 
   static Map<String, WidgetBuilder> get routes => {
@@ -16,11 +18,27 @@ class AppRoutes {
   static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
     final uri = Uri.tryParse(settings.name ?? '');
 
+    if (uri?.path == category) {
+      final queryCategoryId = int.tryParse(
+        uri?.queryParameters['category_id'] ?? '',
+      );
+      final argumentCategoryId = settings.arguments is int
+          ? settings.arguments as int
+          : null;
+      final categoryId = queryCategoryId ?? argumentCategoryId;
+
+      if (categoryId != null) {
+        return MaterialPageRoute(
+          builder: (_) => CategoryScreen(categoryId: categoryId),
+          settings: settings,
+        );
+      }
+    }
+
     if (uri?.path == products) {
       final queryCategoryId = int.tryParse(
         uri?.queryParameters['category_id'] ?? '',
       );
-
       final argumentCategoryId = settings.arguments is int
           ? settings.arguments as int
           : null;
