@@ -47,17 +47,30 @@ class ProductsScreen extends ConsumerWidget {
               );
             }
 
-            return GridView.builder(
-              itemCount: products.length,
-              gridDelegate:
-                  const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.65,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-              ),
-              itemBuilder: (context, index) {
-                return ProductCard(product: products[index]);
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                final width = constraints.maxWidth;
+                final columns = width >= 1200
+                    ? 5
+                    : width >= 900
+                        ? 4
+                        : width >= 600
+                            ? 3
+                            : 2;
+
+                return GridView.builder(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  itemCount: products.length,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: columns,
+                    childAspectRatio: 0.72,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                  ),
+                  itemBuilder: (context, index) {
+                    return ProductCard(product: products[index]);
+                  },
+                );
               },
             );
           },
