@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../data/models/category_model.dart';
+import '../../../providers/category_provider.dart';
 import '../../../providers/product_provider.dart';
 import '../../../shared/widgets/app_empty.dart';
 import '../../../shared/widgets/app_error.dart';
@@ -15,13 +17,43 @@ class ProductsScreen extends ConsumerWidget {
 
   final int? categoryId;
 
+  Category? _findCategory(List<Category> categories, int id) {
+    for (final category in categories) {
+      if (category.id == id) return category;
+
+      final child = _findCategory(category.children, id);
+      if (child != null) return child;
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final productsAsync = ref.watch(productsProvider(categoryId));
+    final categoriesAsync = categoryId == null
+        ? null
+        : ref.watch(categoriesProvider);
+
+    final categoryName = categoryId == null
+        ? null
+        : categoriesAsync?.when(
+            loading: () => null,
+            error: (_, _) => null,
+            data: (categories) => _findCategory(categories, categoryId!)?.name,
+          );
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF1F2F4),
       appBar: AppBar(
-        title: Text(categoryId == null ? 'محصولات' : 'محصولات دسته‌بندی'),
+        backgroundColor: const Color(0xFFE2E4E8),
+        surfaceTintColor: Colors.transparent,
+        title: Text(
+          categoryName ?? (categoryId == null ? 'محصولات' : 'محصولات'),
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF25282D),
+          ),
+        ),
         centerTitle: true,
       ),
       body: Padding(
