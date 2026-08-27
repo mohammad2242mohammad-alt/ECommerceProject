@@ -35,10 +35,13 @@ class CategoryScreen extends ConsumerWidget {
     );
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF1F2F4),
       appBar: AppBar(
+        backgroundColor: const Color(0xFFE2E4E8),
+        surfaceTintColor: Colors.transparent,
         title: categoriesAsync.when(
           loading: () => const Text('دسته‌بندی'),
-          error: (_, __) => const Text('دسته‌بندی'),
+          error: (_, _) => const Text('دسته‌بندی'),
           data: (categories) {
             final category = _findCategory(categories, categoryId);
             return Text(category?.name ?? 'دسته‌بندی');
@@ -92,6 +95,7 @@ class CategoryScreen extends ConsumerWidget {
                       style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
+                        color: Color(0xFF25282D),
                       ),
                     ),
                     if (category.description != null &&
@@ -99,9 +103,9 @@ class CategoryScreen extends ConsumerWidget {
                       const SizedBox(height: 8),
                       Text(
                         category.description!,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 13,
-                          color: Colors.grey.shade600,
+                          color: Color(0xFF5F6368),
                         ),
                       ),
                     ],
@@ -112,7 +116,7 @@ class CategoryScreen extends ConsumerWidget {
                         child: ListView.separated(
                           scrollDirection: Axis.horizontal,
                           itemCount: category.children.length,
-                          separatorBuilder: (_, __) =>
+                          separatorBuilder: (_, _) =>
                               const SizedBox(width: 12),
                           itemBuilder: (context, index) {
                             final child = category.children[index];
@@ -121,10 +125,11 @@ class CategoryScreen extends ConsumerWidget {
                               child: Card(
                                 margin: EdgeInsets.zero,
                                 elevation: 0,
+                                color: const Color(0xFFE7E9ED),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14),
-                                  side: BorderSide(
-                                    color: Colors.grey.shade200,
+                                  side: const BorderSide(
+                                    color: Color(0xFFD5D8DD),
                                   ),
                                 ),
                                 child: InkWell(
@@ -147,6 +152,7 @@ class CategoryScreen extends ConsumerWidget {
                                         style: const TextStyle(
                                           fontSize: 13,
                                           fontWeight: FontWeight.w600,
+                                          color: Color(0xFF30343A),
                                         ),
                                       ),
                                     ),
@@ -164,6 +170,7 @@ class CategoryScreen extends ConsumerWidget {
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
+                        color: Color(0xFF25282D),
                       ),
                     ),
                     const SizedBox(height: 14),
