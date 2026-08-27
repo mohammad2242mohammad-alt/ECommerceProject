@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/routes/app_routes.dart';
 import '../../../providers/category_provider.dart';
 import '../../../shared/widgets/app_empty.dart';
 import '../../../shared/widgets/app_error.dart';
@@ -16,8 +17,6 @@ class CategorySection extends ConsumerWidget {
     int categoryId,
   ) async {
     if (kIsWeb) {
-      // Flutter Web's default URL strategy uses a hash route. Keep the
-      // current app URL and open the category route in a new browser tab.
       final current = Uri.base;
       final uri = Uri(
         scheme: current.scheme,
@@ -25,7 +24,7 @@ class CategorySection extends ConsumerWidget {
         host: current.host,
         port: current.hasPort ? current.port : null,
         path: current.path,
-        fragment: '/products?category_id=$categoryId',
+        fragment: '${AppRoutes.category}?category_id=$categoryId',
       );
 
       final opened = await launchUrl(
@@ -43,11 +42,10 @@ class CategorySection extends ConsumerWidget {
       return;
     }
 
-    // On Android/iOS/desktop, use the app's own navigation.
     if (context.mounted) {
       Navigator.pushNamed(
         context,
-        '/products',
+        AppRoutes.category,
         arguments: categoryId,
       );
     }
