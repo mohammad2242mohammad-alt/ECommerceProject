@@ -1,4 +1,4 @@
-﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/models/product_model.dart';
 import '../data/repositories/product_repository.dart';
@@ -13,8 +13,7 @@ final productServiceProvider = Provider<ProductService>((ref) {
   );
 });
 
-final productRepositoryProvider =
-    Provider<ProductRepository>((ref) {
+final productRepositoryProvider = Provider<ProductRepository>((ref) {
   final productService = ref.watch(productServiceProvider);
 
   return ProductRepository(
@@ -22,9 +21,14 @@ final productRepositoryProvider =
   );
 });
 
-final productsProvider =
-    FutureProvider<List<ProductModel>>((ref) {
-  final repository = ref.watch(productRepositoryProvider);
+/// When [categoryId] is null, all products are returned.
+/// When it has a value, only products belonging to that category are loaded.
+final productsProvider = FutureProvider.family<List<ProductModel>, int?>(
+  (ref, categoryId) {
+    final repository = ref.watch(productRepositoryProvider);
 
-  return repository.getProducts();
-});
+    return repository.getProducts(
+      categoryId: categoryId,
+    );
+  },
+);
