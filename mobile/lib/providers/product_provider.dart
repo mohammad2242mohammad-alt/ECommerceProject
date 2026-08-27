@@ -31,3 +31,17 @@ final productsProvider = FutureProvider.family<List<ProductModel>, int?>(
     );
   },
 );
+
+/// Products shown in the category landing page, ordered by rating.
+final popularProductsByCategoryProvider =
+    FutureProvider.family<List<ProductModel>, int>(
+  (ref, categoryId) {
+    final repository = ref.watch(productRepositoryProvider);
+
+    return repository.getProducts(
+      categoryId: categoryId,
+      sort: 'rating_desc',
+      perPage: 6,
+    );
+  },
+);
