@@ -92,7 +92,7 @@ class CategorySection extends ConsumerWidget {
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: categories.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 14),
+                  separatorBuilder: (_, _) => const SizedBox(width: 14),
                   itemBuilder: (context, index) {
                     final category = categories[index];
 
@@ -121,7 +121,7 @@ class CategorySection extends ConsumerWidget {
                                         width: 68,
                                         height: 68,
                                         fit: BoxFit.cover,
-                                        errorBuilder: (_, __, ___) =>
+                                        errorBuilder: (_, _, _) =>
                                             const Icon(
                                           Icons.category_outlined,
                                           size: 32,
