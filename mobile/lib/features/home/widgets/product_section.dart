@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../providers/product_provider.dart';
@@ -12,7 +12,7 @@ class ProductSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final productsAsync = ref.watch(productsProvider);
+    final productsAsync = ref.watch(productsProvider(null));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -25,10 +25,8 @@ class ProductSection extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 16),
-
         productsAsync.when(
           loading: () => const AppLoading(),
-
           error: (error, stackTrace) {
             debugPrint('PRODUCT ERROR: $error');
             debugPrint('PRODUCT STACK: $stackTrace');
@@ -36,11 +34,10 @@ class ProductSection extends ConsumerWidget {
             return AppError(
               message: 'خطا در دریافت محصولات',
               onRetry: () {
-                ref.invalidate(productsProvider);
+                ref.invalidate(productsProvider(null));
               },
             );
           },
-
           data: (products) {
             if (products.isEmpty) {
               return const AppEmpty(
@@ -61,11 +58,7 @@ class ProductSection extends ConsumerWidget {
                 mainAxisSpacing: 12,
               ),
               itemBuilder: (context, index) {
-                final product = products[index];
-
-                return ProductCard(
-                  product: product,
-                );
+                return ProductCard(product: products[index]);
               },
             );
           },
