@@ -21,8 +21,7 @@ final productRepositoryProvider = Provider<ProductRepository>((ref) {
   );
 });
 
-/// When [categoryId] is null, all products are returned.
-/// When it has a value, only products belonging to that category are loaded.
+/// null = all products; a value = products belonging to that category.
 final productsProvider = FutureProvider.family<List<ProductModel>, int?>(
   (ref, categoryId) {
     final repository = ref.watch(productRepositoryProvider);
