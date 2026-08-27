@@ -17,6 +17,7 @@ class Product extends Model
         'discount_price',
         'stock',
         'status',
+        'views',
     ];
          public function brand()
         {

@@ -9,16 +9,22 @@ use Illuminate\Http\JsonResponse;
 
 class CategoryController extends Controller
 {
+    /**
+     * Get all active root categories with their active children.
+     *
+     * Root categories are categories without a parent.
+     */
     public function index(): JsonResponse
     {
         $categories = Category::query()
-            ->where('is_active', true)
             ->whereNull('parent_id')
+            ->where('is_active', 1)
             ->with([
                 'children' => function ($query) {
-                    $query->where('is_active', true)
+                    $query
+                        ->where('is_active', 1)
                         ->orderBy('sort_order');
-                }
+                },
             ])
             ->orderBy('sort_order')
             ->get();
@@ -30,16 +36,19 @@ class CategoryController extends Controller
         ]);
     }
 
+    /**
+     * Get one category with its children.
+     */
     public function show(int $id): JsonResponse
     {
         $category = Category::query()
-            ->where('is_active', true)
+            ->where('is_active', 1)
             ->with([
-                'parent',
                 'children' => function ($query) {
-                    $query->where('is_active', true)
+                    $query
+                        ->where('is_active', 1)
                         ->orderBy('sort_order');
-                }
+                },
             ])
             ->findOrFail($id);
 

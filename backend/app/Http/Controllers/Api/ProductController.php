@@ -65,8 +65,12 @@ class ProductController extends Controller
                 break;
 
             case 'rating_desc':
-                $query->orderBy('rating', 'desc');
+                $query->orderBy('rating_average', 'desc');
                 break;
+
+                        case 'popular':
+                              $query->orderBy('views', 'desc');
+                              break;
 
             default:
                 $query->orderBy('created_at', 'desc');

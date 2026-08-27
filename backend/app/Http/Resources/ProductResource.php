@@ -23,6 +23,7 @@ class ProductResource extends JsonResource
             'status' => $this->status,
             'rating_average' => $this->rating_average,
             'rating_count' => $this->rating_count,
+                        'views' => $this->views,
 
             'category' => $this->whenLoaded(
                 'category',

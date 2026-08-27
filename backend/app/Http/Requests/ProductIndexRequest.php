@@ -44,7 +44,7 @@ class ProductIndexRequest extends FormRequest
             'sort' => [
                 'nullable',
                 'string',
-                'in:newest,oldest,price_asc,price_desc,rating_desc',
+                'in:newest,oldest,price_asc,price_desc,rating_desc,popular',
             ],
 
             'min_price' => [
