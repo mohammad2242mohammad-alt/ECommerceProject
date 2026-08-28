@@ -53,19 +53,12 @@ Route::get(
     [ReviewController::class, 'index']
 );
 
-Route::get(
-    '/banners',
-    [BannerController::class, 'index']
-);
-
-Route::get(
-    '/settings',
-    [SettingController::class, 'index']
-);
+Route::get('/banners', [BannerController::class, 'index']);
+Route::get('/settings', [SettingController::class, 'index']);
 
 /*
 |--------------------------------------------------------------------------
-| Category Attributes
+| Public Product Data
 |--------------------------------------------------------------------------
 */
 
@@ -74,108 +67,24 @@ Route::get(
     [CategoryAttributeController::class, 'index']
 );
 
-Route::post(
-    '/categories/{categoryId}/attributes',
-    [CategoryAttributeController::class, 'store']
-);
-
-Route::put(
-    '/attributes/{id}',
-    [CategoryAttributeController::class, 'update']
-);
-
-Route::delete(
-    '/attributes/{id}',
-    [CategoryAttributeController::class, 'destroy']
-);
-
-/*
-|--------------------------------------------------------------------------
-| Product Attributes
-|--------------------------------------------------------------------------
-*/
-
 Route::get(
     '/products/{productId}/attributes',
     [ProductAttributeValueController::class, 'index']
 );
-
-Route::post(
-    '/products/{productId}/attributes',
-    [ProductAttributeValueController::class, 'store']
-);
-
-/*
-|--------------------------------------------------------------------------
-| Product Images
-|--------------------------------------------------------------------------
-*/
 
 Route::get(
     '/products/{productId}/images',
     [ProductImageController::class, 'index']
 );
 
-Route::post(
-    '/products/{productId}/images',
-    [ProductImageController::class, 'store']
-);
-
-Route::delete(
-    '/images/{id}',
-    [ProductImageController::class, 'destroy']
-);
-
-/*
-|--------------------------------------------------------------------------
-| Product Variants
-|--------------------------------------------------------------------------
-*/
-
 Route::get(
     '/products/{productId}/variants',
     [ProductVariantController::class, 'index']
 );
 
-Route::post(
-    '/products/{productId}/variants',
-    [ProductVariantController::class, 'store']
-);
-
-Route::put(
-    '/variants/{id}',
-    [ProductVariantController::class, 'update']
-);
-
-Route::delete(
-    '/variants/{id}',
-    [ProductVariantController::class, 'destroy']
-);
-
-/*
-|--------------------------------------------------------------------------
-| Variant Values
-|--------------------------------------------------------------------------
-*/
-
 Route::get(
     '/variants/{variantId}/values',
     [VariantValueController::class, 'index']
-);
-
-Route::post(
-    '/variants/{variantId}/values',
-    [VariantValueController::class, 'store']
-);
-
-Route::put(
-    '/variant-values/{id}',
-    [VariantValueController::class, 'update']
-);
-
-Route::delete(
-    '/variant-values/{id}',
-    [VariantValueController::class, 'destroy']
 );
 
 /*
@@ -219,11 +128,19 @@ Route::post(
 
 Route::middleware('auth:sanctum')->group(function () {
 
+    /*
+    | Addresses
+    */
+
     Route::get('/addresses', [AddressController::class, 'index']);
     Route::post('/addresses', [AddressController::class, 'store']);
     Route::get('/addresses/{id}', [AddressController::class, 'show']);
     Route::put('/addresses/{id}', [AddressController::class, 'update']);
     Route::delete('/addresses/{id}', [AddressController::class, 'destroy']);
+
+    /*
+    | Favorites
+    */
 
     Route::get('/favorites', [FavoriteController::class, 'index']);
     Route::post('/favorites', [FavoriteController::class, 'store']);
@@ -233,10 +150,18 @@ Route::middleware('auth:sanctum')->group(function () {
         [FavoriteController::class, 'destroy']
     );
 
+    /*
+    | Reviews
+    */
+
     Route::post(
         '/products/{productId}/reviews',
         [ReviewController::class, 'store']
     );
+
+    /*
+    | Orders
+    */
 
     Route::get('/orders', [OrderController::class, 'index']);
     Route::post('/orders', [OrderController::class, 'store']);
@@ -247,6 +172,10 @@ Route::middleware('auth:sanctum')->group(function () {
         [OrderController::class, 'cancel']
     );
 
+    /*
+    | Payments
+    */
+
     Route::post(
         '/payments/{orderId}/start',
         [PaymentController::class, 'start']
@@ -255,5 +184,97 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get(
         '/payments/{orderId}/status',
         [PaymentController::class, 'status']
+    );
+});
+
+/*
+|--------------------------------------------------------------------------
+| Admin APIs
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware([
+    'auth:sanctum',
+    'admin',
+])->group(function () {
+
+    /*
+    | Category Attributes
+    */
+
+    Route::post(
+        '/categories/{categoryId}/attributes',
+        [CategoryAttributeController::class, 'store']
+    );
+
+    Route::put(
+        '/attributes/{id}',
+        [CategoryAttributeController::class, 'update']
+    );
+
+    Route::delete(
+        '/attributes/{id}',
+        [CategoryAttributeController::class, 'destroy']
+    );
+
+    /*
+    | Product Attributes
+    */
+
+    Route::post(
+        '/products/{productId}/attributes',
+        [ProductAttributeValueController::class, 'store']
+    );
+
+    /*
+    | Product Images
+    */
+
+    Route::post(
+        '/products/{productId}/images',
+        [ProductImageController::class, 'store']
+    );
+
+    Route::delete(
+        '/images/{id}',
+        [ProductImageController::class, 'destroy']
+    );
+
+    /*
+    | Product Variants
+    */
+
+    Route::post(
+        '/products/{productId}/variants',
+        [ProductVariantController::class, 'store']
+    );
+
+    Route::put(
+        '/variants/{id}',
+        [ProductVariantController::class, 'update']
+    );
+
+    Route::delete(
+        '/variants/{id}',
+        [ProductVariantController::class, 'destroy']
+    );
+
+    /*
+    | Variant Values
+    */
+
+    Route::post(
+        '/variants/{variantId}/values',
+        [VariantValueController::class, 'store']
+    );
+
+    Route::put(
+        '/variant-values/{id}',
+        [VariantValueController::class, 'update']
+    );
+
+    Route::delete(
+        '/variant-values/{id}',
+        [VariantValueController::class, 'destroy']
     );
 });
