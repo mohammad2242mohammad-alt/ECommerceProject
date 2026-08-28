@@ -7,12 +7,14 @@ use App\Http\Controllers\Api\CategoryAttributeController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CheckoutController;
 use App\Http\Controllers\Api\CouponController;
+use App\Http\Controllers\Api\FavoriteController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ProductAttributeValueController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\ProductImageController;
 use App\Http\Controllers\Api\ProductVariantController;
+use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\VariantValueController;
 use Illuminate\Support\Facades\Route;
 
@@ -75,6 +77,17 @@ Route::delete(
 
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/{id}', [ProductController::class, 'show']);
+
+/*
+|--------------------------------------------------------------------------
+| Product Reviews - Public
+|--------------------------------------------------------------------------
+*/
+
+Route::get(
+    '/products/{productId}/reviews',
+    [ReviewController::class, 'index']
+);
 
 /*
 |--------------------------------------------------------------------------
@@ -224,29 +237,42 @@ Route::middleware('auth:sanctum')->group(function () {
     |--------------------------------------------------------------------------
     */
 
+    Route::get('/addresses', [AddressController::class, 'index']);
+    Route::post('/addresses', [AddressController::class, 'store']);
+    Route::get('/addresses/{id}', [AddressController::class, 'show']);
+    Route::put('/addresses/{id}', [AddressController::class, 'update']);
+    Route::delete('/addresses/{id}', [AddressController::class, 'destroy']);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Favorites
+    |--------------------------------------------------------------------------
+    */
+
     Route::get(
-        '/addresses',
-        [AddressController::class, 'index']
+        '/favorites',
+        [FavoriteController::class, 'index']
     );
 
     Route::post(
-        '/addresses',
-        [AddressController::class, 'store']
-    );
-
-    Route::get(
-        '/addresses/{id}',
-        [AddressController::class, 'show']
-    );
-
-    Route::put(
-        '/addresses/{id}',
-        [AddressController::class, 'update']
+        '/favorites',
+        [FavoriteController::class, 'store']
     );
 
     Route::delete(
-        '/addresses/{id}',
-        [AddressController::class, 'destroy']
+        '/favorites/{productId}',
+        [FavoriteController::class, 'destroy']
+    );
+
+    /*
+    |--------------------------------------------------------------------------
+    | Reviews
+    |--------------------------------------------------------------------------
+    */
+
+    Route::post(
+        '/products/{productId}/reviews',
+        [ReviewController::class, 'store']
     );
 
     /*
@@ -255,20 +281,9 @@ Route::middleware('auth:sanctum')->group(function () {
     |--------------------------------------------------------------------------
     */
 
-    Route::get(
-        '/orders',
-        [OrderController::class, 'index']
-    );
-
-    Route::post(
-        '/orders',
-        [OrderController::class, 'store']
-    );
-
-    Route::get(
-        '/orders/{id}',
-        [OrderController::class, 'show']
-    );
+    Route::get('/orders', [OrderController::class, 'index']);
+    Route::post('/orders', [OrderController::class, 'store']);
+    Route::get('/orders/{id}', [OrderController::class, 'show']);
 
     Route::post(
         '/orders/{id}/cancel',
