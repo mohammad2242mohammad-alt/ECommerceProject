@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminProductAttributeController;
 use App\Http\Controllers\Admin\AdminProductController;
 use App\Http\Controllers\Admin\AdminProductImageController;
+use App\Http\Controllers\Admin\AdminProductVariantController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -80,7 +81,7 @@ Route::prefix('admin')
 
                 /*
                 |--------------------------------------------------------------------------
-                | Products
+                | Product Images
                 |--------------------------------------------------------------------------
                 */
 
@@ -99,10 +100,43 @@ Route::prefix('admin')
                     [AdminProductImageController::class, 'destroy']
                 )->name('products.images.destroy');
 
+                /*
+                |--------------------------------------------------------------------------
+                | Product Attributes
+                |--------------------------------------------------------------------------
+                */
+
                 Route::post(
                     '/products/{product}/attributes',
                     [AdminProductAttributeController::class, 'update']
                 )->name('products.attributes.update');
+
+                /*
+                |--------------------------------------------------------------------------
+                | Product Variants
+                |--------------------------------------------------------------------------
+                */
+
+                Route::post(
+                    '/products/{product}/variants',
+                    [AdminProductVariantController::class, 'store']
+                )->name('products.variants.store');
+
+                Route::put(
+                    '/products/{product}/variants/{variant}',
+                    [AdminProductVariantController::class, 'update']
+                )->name('products.variants.update');
+
+                Route::delete(
+                    '/products/{product}/variants/{variant}',
+                    [AdminProductVariantController::class, 'destroy']
+                )->name('products.variants.destroy');
+
+                /*
+                |--------------------------------------------------------------------------
+                | Products
+                |--------------------------------------------------------------------------
+                */
 
                 Route::post(
                     '/products/{product}/toggle',

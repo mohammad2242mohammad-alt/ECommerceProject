@@ -7,15 +7,13 @@
 <div class="page-header">
 
     <div>
-
         <h1>
             {{ $product->name }}
         </h1>
 
         <div class="muted">
-            مدیریت اطلاعات، تصاویر و مشخصات محصول
+            مدیریت اطلاعات، تصاویر، مشخصات و تنوع‌های محصول
         </div>
-
     </div>
 
     <a
@@ -27,10 +25,12 @@
 
 </div>
 
+
+{{-- اطلاعات اصلی محصول --}}
 <div class="card">
 
     <h3>
-        اطلاعات اصلی
+        اطلاعات اصلی محصول
     </h3>
 
     <form
@@ -48,9 +48,12 @@
 
             <div class="form-group">
 
-                <label>نام محصول</label>
+                <label>
+                    نام محصول
+                </label>
 
                 <input
+                    type="text"
                     name="name"
                     value="{{ old(
                         'name',
@@ -63,7 +66,9 @@
 
             <div class="form-group">
 
-                <label>دسته‌بندی</label>
+                <label>
+                    دسته‌بندی
+                </label>
 
                 <select
                     name="category_id"
@@ -92,9 +97,12 @@
 
             <div class="form-group">
 
-                <label>Slug</label>
+                <label>
+                    Slug
+                </label>
 
                 <input
+                    type="text"
                     name="slug"
                     class="ltr"
                     value="{{ old(
@@ -108,9 +116,12 @@
 
             <div class="form-group">
 
-                <label>SKU</label>
+                <label>
+                    SKU
+                </label>
 
                 <input
+                    type="text"
                     name="sku"
                     class="ltr"
                     value="{{ old(
@@ -124,7 +135,9 @@
 
             <div class="form-group">
 
-                <label>قیمت</label>
+                <label>
+                    قیمت
+                </label>
 
                 <input
                     type="number"
@@ -161,7 +174,9 @@
 
             <div class="form-group">
 
-                <label>موجودی</label>
+                <label>
+                    موجودی
+                </label>
 
                 <input
                     type="number"
@@ -178,9 +193,14 @@
 
             <div class="form-group">
 
-                <label>وضعیت</label>
+                <label>
+                    وضعیت
+                </label>
 
-                <select name="status">
+                <select
+                    name="status"
+                    required
+                >
 
                     <option
                         value="active"
@@ -214,10 +234,14 @@
 
         <div class="form-group">
 
-            <label>توضیح کوتاه</label>
+            <label>
+                توضیح کوتاه
+            </label>
 
             <input
+                type="text"
                 name="short_description"
+                maxlength="255"
                 value="{{ old(
                     'short_description',
                     $product->short_description
@@ -228,7 +252,9 @@
 
         <div class="form-group">
 
-            <label>توضیحات کامل</label>
+            <label>
+                توضیحات کامل
+            </label>
 
             <textarea
                 name="description"
@@ -251,11 +277,16 @@
 </div>
 
 
+{{-- تصاویر محصول --}}
 <div class="card">
 
     <h3>
         تصاویر محصول
     </h3>
+
+    <p class="muted">
+        تصویر جدید اضافه کنید و تصویر اصلی محصول را مشخص کنید.
+    </p>
 
     <form
         method="POST"
@@ -272,7 +303,9 @@
 
             <div class="form-group">
 
-                <label>تصویر</label>
+                <label>
+                    انتخاب تصویر
+                </label>
 
                 <input
                     type="file"
@@ -281,28 +314,38 @@
                     required
                 >
 
+                <div class="hint">
+                    JPG، PNG یا WEBP حداکثر 4MB
+                </div>
+
             </div>
 
             <div class="form-group">
 
-                <label>متن Alt</label>
+                <label>
+                    متن جایگزین تصویر
+                </label>
 
                 <input
+                    type="text"
                     name="alt_text"
-                    placeholder="توضیح تصویر"
+                    placeholder="مثلاً نمای جلوی محصول"
                 >
 
             </div>
 
             <div class="form-group">
 
-                <label>ترتیب نمایش</label>
+                <label>
+                    ترتیب نمایش
+                </label>
 
                 <input
                     type="number"
                     name="sort_order"
                     value="0"
                     min="0"
+                    required
                 >
 
             </div>
@@ -319,7 +362,7 @@
             >
 
             <label for="image_primary">
-                تصویر اصلی باشد
+                این تصویر اصلی محصول باشد
             </label>
 
         </div>
@@ -335,17 +378,22 @@
 
     </form>
 
+
     @if ($product->images->count())
 
-        <hr style="border:0;border-top:1px solid #eee;margin:25px 0;">
+        <hr
+            style="
+                border:0;
+                border-top:1px solid #eee;
+                margin:25px 0;
+            "
+        >
 
         <div
             style="
                 display:grid;
-                grid-template-columns:repeat(
-                    auto-fill,
-                    minmax(180px,1fr)
-                );
+                grid-template-columns:
+                    repeat(auto-fill, minmax(190px, 1fr));
                 gap:16px;
             "
         >
@@ -357,6 +405,7 @@
                         border:1px solid #eee;
                         border-radius:12px;
                         padding:12px;
+                        background:#fff;
                     "
                 >
 
@@ -367,12 +416,18 @@
                         alt="{{ $image->alt_text }}"
                         style="
                             width:100%;
-                            height:150px;
+                            height:160px;
                             object-fit:cover;
-                            border-radius:8px;
-                            margin-bottom:10px;
+                            border-radius:9px;
+                            margin-bottom:12px;
                         "
                     >
+
+                    <div class="muted">
+                        ترتیب: {{ $image->sort_order }}
+                    </div>
+
+                    <br>
 
                     @if ($image->is_primary)
 
@@ -399,14 +454,14 @@
                                 class="btn btn-light"
                                 type="submit"
                             >
-                                انتخاب به‌عنوان اصلی
+                                انتخاب به‌عنوان تصویر اصلی
                             </button>
 
                         </form>
 
                     @endif
 
-                    <br><br>
+                    <br>
 
                     <form
                         method="POST"
@@ -417,7 +472,7 @@
                                 $image
                             ]
                         ) }}"
-                        onsubmit="return confirm('تصویر حذف شود؟')"
+                        onsubmit="return confirm('این تصویر حذف شود؟')"
                     >
 
                         @csrf
@@ -438,22 +493,48 @@
 
         </div>
 
+    @else
+
+        <div
+            style="
+                margin-top:20px;
+                padding:18px;
+                border-radius:10px;
+                background:#f8f8f8;
+                color:#888;
+            "
+        >
+            هنوز تصویری برای این محصول ثبت نشده است.
+        </div>
+
     @endif
 
 </div>
 
 
+{{-- مشخصات محصول --}}
 <div class="card">
 
     <h3>
         مشخصات محصول
     </h3>
 
+    <p class="muted">
+        مشخصات بر اساس ویژگی‌های تعریف‌شده برای دسته‌بندی محصول نمایش داده می‌شوند.
+    </p>
+
     @if ($categoryAttributes->isEmpty())
 
-        <p class="muted">
+        <div
+            style="
+                padding:18px;
+                border-radius:10px;
+                background:#f8f8f8;
+                margin-bottom:16px;
+            "
+        >
             برای دسته‌بندی این محصول هنوز ویژگی‌ای تعریف نشده است.
-        </p>
+        </div>
 
         <a
             href="{{ route(
@@ -477,86 +558,93 @@
 
             @csrf
 
-            @foreach ($categoryAttributes as $attribute)
+            <div class="form-grid">
 
-                <div class="form-group">
-
-                    <label>
-
-                        {{ $attribute->name }}
-
-                        @if ($attribute->is_required)
-                            *
-                        @endif
-
-                    </label>
+                @foreach ($categoryAttributes as $attribute)
 
                     @php
                         $currentValue =
                             $attributeValueMap
-                            ->get($attribute->id)
-                            ?->value;
+                                ->get($attribute->id)
+                                ?->value;
                     @endphp
 
-                    @if ($attribute->type === 'boolean')
+                    <div class="form-group">
 
-                        <select
-                            name="values[{{ $attribute->id }}]"
-                        >
+                        <label>
 
-                            <option value="">
-                                انتخاب کنید
-                            </option>
+                            {{ $attribute->name }}
 
-                            <option
-                                value="1"
-                                @selected(
-                                    old(
-                                        'values.'.$attribute->id,
-                                        $currentValue
-                                    ) === '1'
-                                )
+                            @if ($attribute->is_required)
+                                <span style="color:#ef4056;">
+                                    *
+                                </span>
+                            @endif
+
+                        </label>
+
+                        @if ($attribute->type === 'boolean')
+
+                            <select
+                                name="values[{{ $attribute->id }}]"
+                                @required($attribute->is_required)
                             >
-                                بله
-                            </option>
 
-                            <option
-                                value="0"
-                                @selected(
-                                    old(
-                                        'values.'.$attribute->id,
-                                        $currentValue
-                                    ) === '0'
-                                )
+                                <option value="">
+                                    انتخاب کنید
+                                </option>
+
+                                <option
+                                    value="1"
+                                    @selected(
+                                        old(
+                                            'values.'.$attribute->id,
+                                            $currentValue
+                                        ) === '1'
+                                    )
+                                >
+                                    بله
+                                </option>
+
+                                <option
+                                    value="0"
+                                    @selected(
+                                        old(
+                                            'values.'.$attribute->id,
+                                            $currentValue
+                                        ) === '0'
+                                    )
+                                >
+                                    خیر
+                                </option>
+
+                            </select>
+
+                        @else
+
+                            <input
+                                type="{{ $attribute->type === 'number' ? 'number' : 'text' }}"
+                                name="values[{{ $attribute->id }}]"
+                                value="{{ old(
+                                    'values.'.$attribute->id,
+                                    $currentValue
+                                ) }}"
+                                @required($attribute->is_required)
                             >
-                                خیر
-                            </option>
 
-                        </select>
+                        @endif
 
-                    @else
+                    </div>
 
-                        <input
-                            type="{{ $attribute->type === 'number' ? 'number' : 'text' }}"
-                            name="values[{{ $attribute->id }}]"
-                            value="{{ old(
-                                'values.'.$attribute->id,
-                                $currentValue
-                            ) }}"
-                            @required($attribute->is_required)
-                        >
+                @endforeach
 
-                    @endif
-
-                </div>
-
-            @endforeach
+            </div>
 
             <button
                 class="btn btn-primary"
                 type="submit"
             >
-                ذخیره مشخصات
+                ذخیره مشخصات محصول
             </button>
 
         </form>
@@ -564,5 +652,460 @@
     @endif
 
 </div>
+
+
+{{-- افزودن Variant --}}
+<div class="card">
+
+    <h3>
+        تنوع‌های محصول
+    </h3>
+
+    <p class="muted">
+        برای حالت‌های مختلف محصول مانند حافظه، رم، رنگ یا سایر ویژگی‌ها تنوع ایجاد کنید.
+    </p>
+
+    <h4>
+        افزودن تنوع جدید
+    </h4>
+
+    <form
+        method="POST"
+        action="{{ route(
+            'admin.products.variants.store',
+            $product
+        ) }}"
+    >
+
+        @csrf
+
+        <div class="form-grid">
+
+            <div class="form-group">
+
+                <label>
+                    SKU تنوع
+                </label>
+
+                <input
+                    type="text"
+                    name="sku"
+                    class="ltr"
+                    placeholder="VARIANT-001"
+                >
+
+            </div>
+
+            <div class="form-group">
+
+                <label>
+                    قیمت اختصاصی
+                </label>
+
+                <input
+                    type="number"
+                    name="price"
+                    min="0"
+                    step="0.01"
+                >
+
+                <div class="hint">
+                    در صورت خالی بودن، قیمت پایه محصول مبنا خواهد بود.
+                </div>
+
+            </div>
+
+            <div class="form-group">
+
+                <label>
+                    قیمت تخفیف‌خورده
+                </label>
+
+                <input
+                    type="number"
+                    name="discount_price"
+                    min="0"
+                    step="0.01"
+                >
+
+            </div>
+
+            <div class="form-group">
+
+                <label>
+                    موجودی
+                </label>
+
+                <input
+                    type="number"
+                    name="stock"
+                    min="0"
+                    value="0"
+                    required
+                >
+
+            </div>
+
+        </div>
+
+        @if ($categoryAttributes->count())
+
+            <h4>
+                مقادیر ویژگی‌های تنوع
+            </h4>
+
+            <div class="form-grid">
+
+                @foreach ($categoryAttributes as $attribute)
+
+                    <div class="form-group">
+
+                        <label>
+                            {{ $attribute->name }}
+                        </label>
+
+                        @if ($attribute->type === 'boolean')
+
+                            <select
+                                name="values[{{ $attribute->id }}]"
+                            >
+
+                                <option value="">
+                                    انتخاب نشده
+                                </option>
+
+                                <option value="1">
+                                    بله
+                                </option>
+
+                                <option value="0">
+                                    خیر
+                                </option>
+
+                            </select>
+
+                        @else
+
+                            <input
+                                type="{{ $attribute->type === 'number' ? 'number' : 'text' }}"
+                                name="values[{{ $attribute->id }}]"
+                            >
+
+                        @endif
+
+                    </div>
+
+                @endforeach
+
+            </div>
+
+        @endif
+
+        <input
+            type="hidden"
+            name="is_active"
+            value="0"
+        >
+
+        <div class="checkbox-row">
+
+            <input
+                id="new_variant_active"
+                type="checkbox"
+                name="is_active"
+                value="1"
+                checked
+            >
+
+            <label for="new_variant_active">
+                تنوع فعال باشد
+            </label>
+
+        </div>
+
+        <br>
+
+        <button
+            class="btn btn-primary"
+            type="submit"
+        >
+            افزودن تنوع
+        </button>
+
+    </form>
+
+</div>
+
+
+{{-- Variantهای موجود --}}
+@forelse ($product->variants as $variant)
+
+    @php
+        $variantValueMap =
+            $variant
+                ->values
+                ->keyBy(
+                    'category_attribute_id'
+                );
+    @endphp
+
+    <div class="card">
+
+        <div class="page-header">
+
+            <div>
+
+                <h3 style="margin:0 0 6px 0;">
+                    تنوع #{{ $variant->id }}
+                </h3>
+
+                <div class="muted">
+                    {{ $variant->sku ?? 'بدون SKU' }}
+                </div>
+
+            </div>
+
+            @if ($variant->is_active)
+
+                <span class="badge badge-active">
+                    فعال
+                </span>
+
+            @else
+
+                <span class="badge badge-inactive">
+                    غیرفعال
+                </span>
+
+            @endif
+
+        </div>
+
+        <form
+            method="POST"
+            action="{{ route(
+                'admin.products.variants.update',
+                [
+                    $product,
+                    $variant
+                ]
+            ) }}"
+        >
+
+            @csrf
+            @method('PUT')
+
+            <div class="form-grid">
+
+                <div class="form-group">
+
+                    <label>
+                        SKU
+                    </label>
+
+                    <input
+                        type="text"
+                        name="sku"
+                        class="ltr"
+                        value="{{ $variant->sku }}"
+                    >
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>
+                        قیمت اختصاصی
+                    </label>
+
+                    <input
+                        type="number"
+                        name="price"
+                        min="0"
+                        step="0.01"
+                        value="{{ $variant->price }}"
+                    >
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>
+                        قیمت تخفیف‌خورده
+                    </label>
+
+                    <input
+                        type="number"
+                        name="discount_price"
+                        min="0"
+                        step="0.01"
+                        value="{{ $variant->discount_price }}"
+                    >
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>
+                        موجودی
+                    </label>
+
+                    <input
+                        type="number"
+                        name="stock"
+                        min="0"
+                        value="{{ $variant->stock }}"
+                        required
+                    >
+
+                </div>
+
+            </div>
+
+            @if ($categoryAttributes->count())
+
+                <div class="form-grid">
+
+                    @foreach ($categoryAttributes as $attribute)
+
+                        @php
+                            $variantValue =
+                                $variantValueMap
+                                    ->get(
+                                        $attribute->id
+                                    )
+                                    ?->value;
+                        @endphp
+
+                        <div class="form-group">
+
+                            <label>
+                                {{ $attribute->name }}
+                            </label>
+
+                            @if ($attribute->type === 'boolean')
+
+                                <select
+                                    name="values[{{ $attribute->id }}]"
+                                >
+
+                                    <option value="">
+                                        انتخاب نشده
+                                    </option>
+
+                                    <option
+                                        value="1"
+                                        @selected(
+                                            $variantValue === '1'
+                                        )
+                                    >
+                                        بله
+                                    </option>
+
+                                    <option
+                                        value="0"
+                                        @selected(
+                                            $variantValue === '0'
+                                        )
+                                    >
+                                        خیر
+                                    </option>
+
+                                </select>
+
+                            @else
+
+                                <input
+                                    type="{{ $attribute->type === 'number' ? 'number' : 'text' }}"
+                                    name="values[{{ $attribute->id }}]"
+                                    value="{{ $variantValue }}"
+                                >
+
+                            @endif
+
+                        </div>
+
+                    @endforeach
+
+                </div>
+
+            @endif
+
+            <input
+                type="hidden"
+                name="is_active"
+                value="0"
+            >
+
+            <div class="checkbox-row">
+
+                <input
+                    id="variant_active_{{ $variant->id }}"
+                    type="checkbox"
+                    name="is_active"
+                    value="1"
+                    @checked(
+                        $variant->is_active
+                    )
+                >
+
+                <label
+                    for="variant_active_{{ $variant->id }}"
+                >
+                    این تنوع فعال باشد
+                </label>
+
+            </div>
+
+            <br>
+
+            <button
+                class="btn btn-primary"
+                type="submit"
+            >
+                ذخیره تغییرات تنوع
+            </button>
+
+        </form>
+
+        <br>
+
+        <form
+            method="POST"
+            action="{{ route(
+                'admin.products.variants.destroy',
+                [
+                    $product,
+                    $variant
+                ]
+            ) }}"
+            onsubmit="return confirm('این تنوع حذف شود؟')"
+        >
+
+            @csrf
+            @method('DELETE')
+
+            <button
+                class="btn btn-danger"
+                type="submit"
+            >
+                حذف تنوع
+            </button>
+
+        </form>
+
+    </div>
+
+@empty
+
+    <div class="card">
+
+        <div class="muted">
+            هنوز هیچ تنوعی برای این محصول تعریف نشده است.
+        </div>
+
+    </div>
+
+@endforelse
 
 @endsection

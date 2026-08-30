@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\CategoryAttribute;
 use App\Models\Product;
 use App\Models\ProductAttributeValue;
+use App\Models\VariantValue;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -111,7 +112,7 @@ class AdminProductController extends Controller
             )
             ->with(
                 'success',
-                'محصول ایجاد شد. حالا می‌توانید تصویر و مشخصات آن را اضافه کنید.'
+                'محصول ایجاد شد. حالا می‌توانید تصویر، مشخصات و تنوع‌های آن را اضافه کنید.'
             );
     }
 
@@ -127,6 +128,14 @@ class AdminProductController extends Controller
             },
 
             'attributeValues.attribute',
+
+            'variants' => function ($query) {
+                $query
+                    ->with(
+                        'values.attribute'
+                    )
+                    ->orderBy('id');
+            },
         ]);
 
         $categories = Category::query()
@@ -187,16 +196,47 @@ class AdminProductController extends Controller
                     $product->category_id
                 )->pluck('id');
 
-            ProductAttributeValue::query()
-                ->where(
-                    'product_id',
-                    $product->id
-                )
-                ->whereNotIn(
-                    'category_attribute_id',
-                    $validAttributeIds
-                )
-                ->delete();
+            if ($validAttributeIds->isEmpty()) {
+                ProductAttributeValue::query()
+                    ->where(
+                        'product_id',
+                        $product->id
+                    )
+                    ->delete();
+
+                VariantValue::query()
+                    ->whereIn(
+                        'product_variant_id',
+                        $product
+                            ->variants()
+                            ->pluck('id')
+                    )
+                    ->delete();
+            } else {
+                ProductAttributeValue::query()
+                    ->where(
+                        'product_id',
+                        $product->id
+                    )
+                    ->whereNotIn(
+                        'category_attribute_id',
+                        $validAttributeIds
+                    )
+                    ->delete();
+
+                VariantValue::query()
+                    ->whereIn(
+                        'product_variant_id',
+                        $product
+                            ->variants()
+                            ->pluck('id')
+                    )
+                    ->whereNotIn(
+                        'category_attribute_id',
+                        $validAttributeIds
+                    )
+                    ->delete();
+            }
         }
 
         return redirect()
