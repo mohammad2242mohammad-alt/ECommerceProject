@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureAdmin;
+use App\Http\Middleware\EnsureAdminWeb;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -20,11 +21,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'admin' => EnsureAdmin::class,
+            'admin.web' => EnsureAdminWeb::class,
         ]);
 
-        // This project is an API backend.
-        // Unauthenticated API requests must return 401 instead of
-        // attempting to redirect to a non-existent "login" route.
         $middleware->redirectGuestsTo(
             fn (Request $request) => null
         );
