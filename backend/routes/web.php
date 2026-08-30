@@ -1,9 +1,12 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminAuthController;
+use App\Http\Controllers\Admin\AdminCategoryAttributeController;
 use App\Http\Controllers\Admin\AdminCategoryController;
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminProductAttributeController;
 use App\Http\Controllers\Admin\AdminProductController;
+use App\Http\Controllers\Admin\AdminProductImageController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -43,6 +46,26 @@ Route::prefix('admin')
                 |--------------------------------------------------------------------------
                 */
 
+                Route::get(
+                    '/categories/{category}/attributes',
+                    [AdminCategoryAttributeController::class, 'index']
+                )->name('categories.attributes.index');
+
+                Route::post(
+                    '/categories/{category}/attributes',
+                    [AdminCategoryAttributeController::class, 'store']
+                )->name('categories.attributes.store');
+
+                Route::put(
+                    '/categories/{category}/attributes/{attribute}',
+                    [AdminCategoryAttributeController::class, 'update']
+                )->name('categories.attributes.update');
+
+                Route::delete(
+                    '/categories/{category}/attributes/{attribute}',
+                    [AdminCategoryAttributeController::class, 'destroy']
+                )->name('categories.attributes.destroy');
+
                 Route::post(
                     '/categories/{category}/toggle',
                     [AdminCategoryController::class, 'toggle']
@@ -60,6 +83,26 @@ Route::prefix('admin')
                 | Products
                 |--------------------------------------------------------------------------
                 */
+
+                Route::post(
+                    '/products/{product}/images',
+                    [AdminProductImageController::class, 'store']
+                )->name('products.images.store');
+
+                Route::post(
+                    '/products/{product}/images/{image}/primary',
+                    [AdminProductImageController::class, 'makePrimary']
+                )->name('products.images.primary');
+
+                Route::delete(
+                    '/products/{product}/images/{image}',
+                    [AdminProductImageController::class, 'destroy']
+                )->name('products.images.destroy');
+
+                Route::post(
+                    '/products/{product}/attributes',
+                    [AdminProductAttributeController::class, 'update']
+                )->name('products.attributes.update');
 
                 Route::post(
                     '/products/{product}/toggle',

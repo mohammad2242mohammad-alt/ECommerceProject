@@ -88,7 +88,20 @@
                     <div class="actions">
 
                         <a
-                            href="{{ route('admin.categories.edit', $category) }}"
+                            href="{{ route(
+                                'admin.categories.attributes.index',
+                                $category
+                            ) }}"
+                            class="btn btn-primary"
+                        >
+                            مشخصات
+                        </a>
+
+                        <a
+                            href="{{ route(
+                                'admin.categories.edit',
+                                $category
+                            ) }}"
                             class="btn btn-light"
                         >
                             ویرایش
@@ -96,7 +109,10 @@
 
                         <form
                             method="POST"
-                            action="{{ route('admin.categories.toggle', $category) }}"
+                            action="{{ route(
+                                'admin.categories.toggle',
+                                $category
+                            ) }}"
                         >
 
                             @csrf
@@ -112,7 +128,10 @@
 
                         <form
                             method="POST"
-                            action="{{ route('admin.categories.destroy', $category) }}"
+                            action="{{ route(
+                                'admin.categories.destroy',
+                                $category
+                            ) }}"
                             onsubmit="return confirm('از حذف این دسته‌بندی مطمئن هستید؟')"
                         >
 
