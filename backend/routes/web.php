@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminCategoryController;
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminProductController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -36,6 +37,12 @@ Route::prefix('admin')
                     [AdminAuthController::class, 'logout']
                 )->name('logout');
 
+                /*
+                |--------------------------------------------------------------------------
+                | Categories
+                |--------------------------------------------------------------------------
+                */
+
                 Route::post(
                     '/categories/{category}/toggle',
                     [AdminCategoryController::class, 'toggle']
@@ -44,6 +51,24 @@ Route::prefix('admin')
                 Route::resource(
                     'categories',
                     AdminCategoryController::class
+                )->except([
+                    'show',
+                ]);
+
+                /*
+                |--------------------------------------------------------------------------
+                | Products
+                |--------------------------------------------------------------------------
+                */
+
+                Route::post(
+                    '/products/{product}/toggle',
+                    [AdminProductController::class, 'toggle']
+                )->name('products.toggle');
+
+                Route::resource(
+                    'products',
+                    AdminProductController::class
                 )->except([
                     'show',
                 ]);

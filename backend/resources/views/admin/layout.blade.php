@@ -40,6 +40,7 @@
             padding: 25px 16px;
             background: #ffffff;
             border-left: 1px solid #e7e7e7;
+            overflow-y: auto;
         }
 
         .brand {
@@ -243,6 +244,21 @@
             margin-bottom: 18px;
         }
 
+        .form-grid {
+            display: grid;
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns:
+                2fr 1fr 1fr auto;
+            gap: 10px;
+            align-items: end;
+        }
+
         label {
             display: block;
             margin-bottom: 7px;
@@ -292,6 +308,16 @@
             margin-top: 6px;
         }
 
+        .muted {
+            color: #888;
+            font-size: 13px;
+        }
+
+        .ltr {
+            direction: ltr;
+            text-align: left;
+        }
+
         @media (max-width: 900px) {
 
             .sidebar {
@@ -302,9 +328,14 @@
                 margin-right: 190px;
             }
 
-            .stats-grid {
+            .stats-grid,
+            .form-grid {
                 grid-template-columns:
                     repeat(2, minmax(0, 1fr));
+            }
+
+            .filters-grid {
+                grid-template-columns: 1fr;
             }
         }
 
@@ -336,9 +367,13 @@
         دسته‌بندی‌ها
     </a>
 
-    <div class="nav-item nav-disabled">
+    <a
+        href="{{ route('admin.products.index') }}"
+        class="nav-item
+        {{ request()->routeIs('admin.products.*') ? 'active' : '' }}"
+    >
         محصولات
-    </div>
+    </a>
 
     <div class="nav-item nav-disabled">
         سفارش‌ها
@@ -382,11 +417,9 @@
     <main class="main">
 
         @if (session('success'))
-
             <div class="alert alert-success">
                 {{ session('success') }}
             </div>
-
         @endif
 
         @if ($errors->any())
