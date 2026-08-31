@@ -24,7 +24,10 @@ class OrderController extends Controller
             'items',
             'payment',
         ])
-            ->where('user_id', $request->user()->id)
+            ->where(
+                'user_id',
+                $request->user()->id
+            )
             ->latest()
             ->paginate(15);
 
@@ -43,7 +46,10 @@ class OrderController extends Controller
             'items',
             'payment',
         ])
-            ->where('user_id', $request->user()->id)
+            ->where(
+                'user_id',
+                $request->user()->id
+            )
             ->findOrFail($id);
 
         return response()->json([
@@ -58,7 +64,11 @@ class OrderController extends Controller
         CheckoutService $checkoutService
     ) {
         $validated = $request->validate([
-            'session_id' => 'required|string',
+            'session_id' => [
+                'required',
+                'string',
+                'max:100',
+            ],
 
             'address_id' => [
                 'required',
@@ -66,7 +76,10 @@ class OrderController extends Controller
                 'exists:addresses,id',
             ],
 
-            'coupon_code' => 'nullable|string',
+            'coupon_code' => [
+                'nullable',
+                'string',
+            ],
         ]);
 
         $user = $request->user();
@@ -74,7 +87,9 @@ class OrderController extends Controller
         $address = Address::where(
             'user_id',
             $user->id
-        )->findOrFail($validated['address_id']);
+        )->findOrFail(
+            $validated['address_id']
+        );
 
         $cart = Cart::with([
             'items.product',
@@ -86,7 +101,10 @@ class OrderController extends Controller
             )
             ->first();
 
-        if (!$cart || $cart->items->isEmpty()) {
+        if (
+            !$cart ||
+            $cart->items->isEmpty()
+        ) {
             return response()->json([
                 'success' => false,
                 'message' => 'Cart is empty',
@@ -101,48 +119,116 @@ class OrderController extends Controller
             $validated,
             $checkoutService
         ) {
-            $calculation = $checkoutService->calculate(
-                $cart,
-                $validated['coupon_code'] ?? null,
-                $user->id
-            );
+            /*
+            |--------------------------------------------------------------------------
+            | Final stock / availability check
+            |--------------------------------------------------------------------------
+            */
 
-            foreach ($cart->items as $item) {
-                if ($item->product_variant_id) {
-                    $variant = ProductVariant::lockForUpdate()
-                        ->find($item->product_variant_id);
+            foreach (
+                $cart->items as $item
+            ) {
+                $product =
+                    Product::lockForUpdate()
+                        ->where(
+                            'id',
+                            $item->product_id
+                        )
+                        ->where(
+                            'status',
+                            'active'
+                        )
+                        ->first();
+
+                if (!$product) {
+                    throw ValidationException::withMessages([
+                        'product' => [
+                            'Product ID ' .
+                            $item->product_id .
+                            ' is not available.',
+                        ],
+                    ]);
+                }
+
+                if (
+                    $item->product_variant_id
+                ) {
+                    $variant =
+                        ProductVariant::lockForUpdate()
+                            ->where(
+                                'id',
+                                $item->product_variant_id
+                            )
+                            ->where(
+                                'product_id',
+                                $product->id
+                            )
+                            ->where(
+                                'is_active',
+                                true
+                            )
+                            ->first();
+
+                    if (!$variant) {
+                        throw ValidationException::withMessages([
+                            'variant' => [
+                                'Selected variant for product ID ' .
+                                $product->id .
+                                ' is not available.',
+                            ],
+                        ]);
+                    }
 
                     if (
-                        !$variant ||
-                        $variant->stock < $item->quantity
+                        $variant->stock <
+                        $item->quantity
                     ) {
                         throw ValidationException::withMessages([
                             'stock' => [
                                 'Insufficient variant stock for product ID ' .
-                                $item->product_id,
+                                $product->id,
                             ],
                         ]);
                     }
                 } else {
-                    $product = Product::lockForUpdate()
-                        ->find($item->product_id);
-
                     if (
-                        !$product ||
-                        $product->stock < $item->quantity
+                        $product->stock <
+                        $item->quantity
                     ) {
                         throw ValidationException::withMessages([
                             'stock' => [
                                 'Insufficient stock for product ID ' .
-                                $item->product_id,
+                                $product->id,
                             ],
                         ]);
                     }
                 }
             }
 
+            /*
+            |--------------------------------------------------------------------------
+            | Recalculate server-side price
+            |--------------------------------------------------------------------------
+            */
+
+            $calculation =
+                $checkoutService->calculate(
+                    $cart,
+                    $validated[
+                        'coupon_code'
+                    ] ?? null,
+                    $user->id
+                );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Create order
+            |--------------------------------------------------------------------------
+            */
+
             $order = Order::create([
-                'user_id' => $user->id,
+                'user_id' =>
+                    $user->id,
 
                 'session_id' =>
                     $validated['session_id'],
@@ -151,24 +237,44 @@ class OrderController extends Controller
                     'ORD-' .
                     now()->format('YmdHis') .
                     '-' .
-                    strtoupper(Str::random(5)),
+                    strtoupper(
+                        Str::random(5)
+                    ),
 
                 'address_snapshot' => [
-                    'title' => $address->title,
+                    'title' =>
+                        $address->title,
+
                     'receiver_name' =>
                         $address->receiver_name,
+
                     'receiver_phone' =>
                         $address->receiver_phone,
-                    'province' => $address->province,
-                    'city' => $address->city,
-                    'address' => $address->address,
-                    'postal_code' => $address->postal_code,
-                    'latitude' => $address->latitude,
-                    'longitude' => $address->longitude,
+
+                    'province' =>
+                        $address->province,
+
+                    'city' =>
+                        $address->city,
+
+                    'address' =>
+                        $address->address,
+
+                    'postal_code' =>
+                        $address->postal_code,
+
+                    'latitude' =>
+                        $address->latitude,
+
+                    'longitude' =>
+                        $address->longitude,
                 ],
 
-                'status' => 'pending',
-                'order_status' => 'pending',
+                'status' =>
+                    'pending',
+
+                'order_status' =>
+                    'pending',
 
                 'subtotal' =>
                     $calculation['subtotal'],
@@ -185,19 +291,45 @@ class OrderController extends Controller
                 'total' =>
                     $calculation['total'],
 
-                'payment_status' => 'unpaid',
+                'payment_status' =>
+                    'unpaid',
             ]);
 
-            foreach ($cart->items as $item) {
-                $product = $item->product;
-                $variant = $item->variant;
+            /*
+            |--------------------------------------------------------------------------
+            | Order items + stock decrement
+            |--------------------------------------------------------------------------
+            */
 
-                $unitPrice = (float) $item->price;
+            foreach (
+                $cart->items as $item
+            ) {
+                $product =
+                    Product::findOrFail(
+                        $item->product_id
+                    );
+
+                $variant = null;
+
+                if (
+                    $item->product_variant_id
+                ) {
+                    $variant =
+                        ProductVariant::findOrFail(
+                            $item->product_variant_id
+                        );
+                }
+
+                $unitPrice =
+                    (float) $item->price;
+
                 $lineTotal =
-                    $unitPrice * (int) $item->quantity;
+                    $unitPrice *
+                    (int) $item->quantity;
 
                 OrderItem::create([
-                    'order_id' => $order->id,
+                    'order_id' =>
+                        $order->id,
 
                     'product_id' =>
                         $item->product_id,
@@ -212,7 +344,8 @@ class OrderController extends Controller
                         $product->name,
 
                     'sku_snapshot' =>
-                        $variant?->sku ?? $product->sku,
+                        $variant?->sku
+                        ?? $product->sku,
 
                     'quantity' =>
                         $item->quantity,
@@ -233,24 +366,24 @@ class OrderController extends Controller
                         $lineTotal,
                 ]);
 
-                if ($item->product_variant_id) {
-                    ProductVariant::where(
-                        'id',
-                        $item->product_variant_id
-                    )->decrement(
+                if ($variant) {
+                    $variant->decrement(
                         'stock',
                         $item->quantity
                     );
                 } else {
-                    Product::where(
-                        'id',
-                        $item->product_id
-                    )->decrement(
+                    $product->decrement(
                         'stock',
                         $item->quantity
                     );
                 }
             }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Coupon usage
+            |--------------------------------------------------------------------------
+            */
 
             if (
                 $calculation['coupon'] &&
@@ -258,7 +391,9 @@ class OrderController extends Controller
             ) {
                 CouponUsage::create([
                     'coupon_id' =>
-                        $calculation['coupon']->id,
+                        $calculation[
+                            'coupon'
+                        ]->id,
 
                     'user_id' =>
                         $user->id,
@@ -267,22 +402,34 @@ class OrderController extends Controller
                         $order->id,
 
                     'discount_amount' =>
-                        $calculation['discount'],
+                        $calculation[
+                            'discount'
+                        ],
 
                     'created_at' =>
                         now(),
                 ]);
             }
 
+            /*
+            |--------------------------------------------------------------------------
+            | Clear cart
+            |--------------------------------------------------------------------------
+            */
+
             $cart->items()->delete();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Order created successfully',
-                'data' => $order->load([
-                    'items',
-                    'payment',
-                ]),
+
+                'message' =>
+                    'Order created successfully',
+
+                'data' =>
+                    $order->load([
+                        'items',
+                        'payment',
+                    ]),
             ], 201);
         });
     }
@@ -318,14 +465,20 @@ class OrderController extends Controller
             ) {
                 return response()->json([
                     'success' => false,
+
                     'message' =>
                         'This order cannot be cancelled',
+
                     'errors' => null,
                 ], 422);
             }
 
-            foreach ($order->items as $item) {
-                if ($item->product_variant_id) {
+            foreach (
+                $order->items as $item
+            ) {
+                if (
+                    $item->product_variant_id
+                ) {
                     ProductVariant::where(
                         'id',
                         $item->product_variant_id
@@ -346,27 +499,39 @@ class OrderController extends Controller
 
             if (
                 $order->payment &&
-                $order->payment->status === 'paid'
+                $order->payment->status ===
+                    'paid'
             ) {
                 $order->payment->update([
-                    'status' => 'refunded',
+                    'status' =>
+                        'refunded',
                 ]);
 
-                $order->payment_status = 'refunded';
+                $order->payment_status =
+                    'refunded';
             }
 
-            $order->order_status = 'cancelled';
-            $order->status = 'cancelled';
+            $order->order_status =
+                'cancelled';
+
+            $order->status =
+                'cancelled';
 
             $order->save();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Order cancelled successfully',
-                'data' => $order->fresh()->load([
-                    'items',
-                    'payment',
-                ]),
+
+                'message' =>
+                    'Order cancelled successfully',
+
+                'data' =>
+                    $order
+                        ->fresh()
+                        ->load([
+                            'items',
+                            'payment',
+                        ]),
             ]);
         });
     }

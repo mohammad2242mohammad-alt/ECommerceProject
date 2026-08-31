@@ -25,6 +25,12 @@ class LoginRequest extends FormRequest
                 'required',
                 'string',
             ],
+
+            'session_id' => [
+                'nullable',
+                'string',
+                'max:100',
+            ],
         ];
     }
 

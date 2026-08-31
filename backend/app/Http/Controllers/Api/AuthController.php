@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Http\Resources\UserResource;
+use App\Models\Cart;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -38,20 +39,32 @@ class AuthController extends Controller
         ], 201);
     }
 
+
     /**
-     * Login user and create a Sanctum token.
+     * Login user and create Sanctum token.
      */
     public function login(LoginRequest $request): JsonResponse
     {
-        $user = User::where('phone', $request->phone)->first();
+        $user = User::where(
+            'phone',
+            $request->phone
+        )->first();
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
+
+        if (
+            !$user ||
+            !Hash::check(
+                $request->password,
+                $user->password
+            )
+        ) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid phone or password',
                 'errors' => null,
             ], 401);
         }
+
 
         if (!$user->is_active) {
             return response()->json([
@@ -61,7 +74,31 @@ class AuthController extends Controller
             ], 403);
         }
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+
+        /*
+        |--------------------------------------------------------------------------
+        | Merge guest cart into user cart
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->filled('session_id')) {
+
+            Cart::where(
+                'session_id',
+                $request->session_id
+            )
+            ->whereNull('user_id')
+            ->update([
+                'user_id' => $user->id,
+            ]);
+
+        }
+
+
+        $token = $user
+            ->createToken('auth_token')
+            ->plainTextToken;
+
 
         return response()->json([
             'success' => true,
@@ -73,12 +110,17 @@ class AuthController extends Controller
         ]);
     }
 
+
     /**
      * Logout current authenticated user.
      */
     public function logout(Request $request): JsonResponse
     {
-        $request->user()->currentAccessToken()?->delete();
+        $request
+            ->user()
+            ->currentAccessToken()
+            ?->delete();
+
 
         return response()->json([
             'success' => true,
@@ -86,6 +128,7 @@ class AuthController extends Controller
             'data' => null,
         ]);
     }
+
 
     /**
      * Return current authenticated user.
@@ -96,7 +139,9 @@ class AuthController extends Controller
             'success' => true,
             'message' => 'Success',
             'data' => [
-                'user' => new UserResource($request->user()),
+                'user' => new UserResource(
+                    $request->user()
+                ),
             ],
         ]);
     }
