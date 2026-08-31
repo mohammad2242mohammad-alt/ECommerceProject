@@ -47,10 +47,21 @@ class CategoryScreen extends ConsumerWidget {
     );
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: const Color(0xFFF7F8FA),
       appBar: AppBar(
-        title: const Text(
-          'دسته‌بندی',
+        title: categoriesAsync.when(
+          loading: () => const Text('دسته‌بندی'),
+          error: (_, _) => const Text('دسته‌بندی'),
+          data: (categories) {
+            final category = _findCategory(
+              categories,
+              categoryId,
+            );
+
+            return Text(
+              category?.name ?? 'دسته‌بندی',
+            );
+          },
         ),
         centerTitle: true,
       ),
@@ -58,6 +69,7 @@ class CategoryScreen extends ConsumerWidget {
         loading: () {
           return const AppLoading();
         },
+
         error: (error, stackTrace) {
           debugPrint(
             'CATEGORY ERROR: $error',
@@ -72,6 +84,7 @@ class CategoryScreen extends ConsumerWidget {
             },
           );
         },
+
         data: (categories) {
           final category = _findCategory(
             categories,
@@ -95,144 +108,250 @@ class CategoryScreen extends ConsumerWidget {
                 categoriesProvider.future,
               );
             },
-            child: ListView(
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(16),
-              children: [
-                Text(
-                  category.name,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
-                if (category.description != null &&
-                    category.description!
-                        .trim()
-                        .isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    category.description!,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(
+                            alpha: 0.05,
+                          ),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment:
+                          CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          category.name,
+                          style: const TextStyle(
+                            fontSize: 25,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        if (category.description != null &&
+                            category.description!
+                                .trim()
+                                .isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            category.description!,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey,
+                              height: 1.7,
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
-                ],
 
-                if (category.children.isNotEmpty) ...[
-                  const SizedBox(height: 24),
+                  if (category.children.isNotEmpty) ...[
+                    const SizedBox(height: 24),
 
-                  const Text(
-                    'زیر‌دسته‌ها',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                    Row(
+                      children: [
+                        Container(
+                          width: 4,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .primary,
+                            borderRadius:
+                                BorderRadius.circular(10),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'زیر‌دسته‌ها',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
 
-                  const SizedBox(height: 12),
+                    const SizedBox(height: 14),
 
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics:
-                        const NeverScrollableScrollPhysics(),
-                    itemCount:
-                        category.children.length,
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      childAspectRatio: 1.15,
-                    ),
-                    itemBuilder: (
-                      context,
-                      index,
-                    ) {
-                      final child =
-                          category.children[index];
+                    LayoutBuilder(
+                      builder: (
+                        context,
+                        constraints,
+                      ) {
+                        final width = constraints.maxWidth;
 
-                      return Card(
-                        elevation: 2,
-                        child: InkWell(
-                          borderRadius:
-                              BorderRadius.circular(12),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    CategoryScreen(
-                                  categoryId:
-                                      child.id,
+                        int columns;
+
+                        if (width >= 1000) {
+                          columns = 5;
+                        } else if (width >= 700) {
+                          columns = 4;
+                        } else if (width >= 500) {
+                          columns = 3;
+                        } else {
+                          columns = 2;
+                        }
+
+                        return GridView.builder(
+                          shrinkWrap: true,
+                          physics:
+                              const NeverScrollableScrollPhysics(),
+                          itemCount:
+                              category.children.length,
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: columns,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                            childAspectRatio: 1.05,
+                          ),
+                          itemBuilder: (
+                            context,
+                            index,
+                          ) {
+                            final child =
+                                category.children[index];
+
+                            return Material(
+                              color: Colors.white,
+                              borderRadius:
+                                  BorderRadius.circular(18),
+                              child: InkWell(
+                                borderRadius:
+                                    BorderRadius.circular(18),
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          CategoryScreen(
+                                        categoryId:
+                                            child.id,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: Padding(
+                                  padding:
+                                      const EdgeInsets.all(12),
+                                  child: Column(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.center,
+                                    children: [
+                                      Container(
+                                        width: 58,
+                                        height: 58,
+                                        decoration:
+                                            BoxDecoration(
+                                          shape:
+                                              BoxShape.circle,
+                                          color: Theme.of(
+                                            context,
+                                          )
+                                              .colorScheme
+                                              .primaryContainer,
+                                        ),
+                                        child: Icon(
+                                          Icons
+                                              .category_outlined,
+                                          color: Theme.of(
+                                            context,
+                                          )
+                                              .colorScheme
+                                              .primary,
+                                          size: 30,
+                                        ),
+                                      ),
+                                      const SizedBox(
+                                        height: 10,
+                                      ),
+                                      Text(
+                                        child.name,
+                                        textAlign:
+                                            TextAlign.center,
+                                        maxLines: 2,
+                                        overflow:
+                                            TextOverflow
+                                                .ellipsis,
+                                        style:
+                                            const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight:
+                                              FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             );
                           },
-                          child: Center(
-                            child: Padding(
-                              padding:
-                                  const EdgeInsets.all(12),
-                              child: Column(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.center,
-                                children: [
-                                  const Icon(
-                                    Icons.category_outlined,
-                                    size: 40,
-                                  ),
-                                  const SizedBox(
-                                    height: 10,
-                                  ),
-                                  Text(
-                                    child.name,
-                                    textAlign:
-                                        TextAlign.center,
-                                    maxLines: 2,
-                                    overflow:
-                                        TextOverflow.ellipsis,
-                                    style:
-                                        const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight:
-                                          FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
+                        );
+                      },
+                    ),
+                  ],
+
+                  const SizedBox(height: 30),
+
+                  Row(
+                    children: [
+                      Container(
+                        width: 4,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .primary,
+                          borderRadius:
+                              BorderRadius.circular(10),
                         ),
-                      );
-                    },
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'محصولات این دسته',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
 
-                const SizedBox(height: 30),
+                  const SizedBox(height: 14),
 
-                const Text(
-                  'محصولات این دسته',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
-                const SizedBox(height: 12),
-
-                const Card(
-                  child: Padding(
-                    padding: EdgeInsets.all(20),
-                    child: Center(
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: const Center(
                       child: Text(
-                        'بخش محصولات این دسته در مرحله بعد متصل می‌شود.',
+                        'محصولات این دسته در مرحله بعد نمایش داده می‌شوند.',
                         textAlign: TextAlign.center,
                       ),
                     ),
                   ),
-                ),
-              ],
+
+                  const SizedBox(height: 30),
+                ],
+              ),
             ),
           );
         },
