@@ -30,28 +30,16 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')->group(function () {
 
-    Route::post(
-        '/register',
-        [AuthController::class, 'register']
-    );
+    Route::post('/register', [AuthController::class, 'register']);
 
-    Route::post(
-        '/login',
-        [AuthController::class, 'login']
-    );
+    Route::post('/login', [AuthController::class, 'login']);
 
 
     Route::middleware('auth:sanctum')->group(function () {
 
-        Route::post(
-            '/logout',
-            [AuthController::class, 'logout']
-        );
+        Route::post('/logout', [AuthController::class, 'logout']);
 
-        Route::get(
-            '/me',
-            [AuthController::class, 'me']
-        );
+        Route::get('/me', [AuthController::class, 'me']);
 
     });
 
@@ -64,134 +52,48 @@ Route::prefix('auth')->group(function () {
 |--------------------------------------------------------------------------
 */
 
+Route::get('/home', [HomeController::class, 'index']);
 
-Route::get(
-    '/home',
-    [HomeController::class, 'index']
-);
+Route::get('/categories', [CategoryController::class, 'index']);
 
+Route::get('/categories/{id}', [CategoryController::class, 'show']);
 
-Route::get(
-    '/categories',
-    [CategoryController::class, 'index']
-);
+Route::get('/products', [ProductController::class, 'index']);
 
+Route::get('/products/{id}', [ProductController::class, 'show']);
 
-Route::get(
-    '/categories/{id}',
-    [CategoryController::class, 'show']
-);
+Route::get('/products/{productId}/reviews', [ReviewController::class, 'index']);
 
+Route::get('/banners', [BannerController::class, 'index']);
 
-Route::get(
-    '/products',
-    [ProductController::class, 'index']
-);
-
-
-Route::get(
-    '/products/{id}',
-    [ProductController::class, 'show']
-);
-
-
-Route::get(
-    '/products/{productId}/reviews',
-    [ReviewController::class, 'index']
-);
-
-
-Route::get(
-    '/banners',
-    [BannerController::class, 'index']
-);
-
-
-Route::get(
-    '/settings',
-    [SettingController::class, 'index']
-);
+Route::get('/settings', [SettingController::class, 'index']);
 
 
 /*
 |--------------------------------------------------------------------------
-| Public Product Data
+| Product Data
 |--------------------------------------------------------------------------
 */
 
-
-Route::get(
-    '/categories/{categoryId}/attributes',
+Route::get('/categories/{categoryId}/attributes',
     [CategoryAttributeController::class, 'index']
 );
 
-
-Route::get(
-    '/products/{productId}/attributes',
+Route::get('/products/{productId}/attributes',
     [ProductAttributeValueController::class, 'index']
 );
 
-
-Route::get(
-    '/products/{productId}/images',
+Route::get('/products/{productId}/images',
     [ProductImageController::class, 'index']
 );
 
-
-Route::get(
-    '/products/{productId}/variants',
+Route::get('/products/{productId}/variants',
     [ProductVariantController::class, 'index']
 );
 
-
-Route::get(
-    '/variants/{variantId}/values',
+Route::get('/variants/{variantId}/values',
     [VariantValueController::class, 'index']
 );
-
-
-/*
-|--------------------------------------------------------------------------
-| Cart / Coupon / Checkout
-|--------------------------------------------------------------------------
-*/
-
-
-Route::get(
-    '/cart',
-    [CartController::class, 'index']
-);
-
-
-Route::post(
-    '/cart/items',
-    [CartController::class, 'store']
-);
-
-
-Route::put(
-    '/cart/items/{id}',
-    [CartController::class, 'update']
-);
-
-
-Route::delete(
-    '/cart/items/{id}',
-    [CartController::class, 'destroy']
-);
-
-
-Route::post(
-    '/coupons/validate',
-    [CouponController::class, 'validateCoupon']
-);
-
-
-Route::post(
-    '/checkout/calculate',
-    [CheckoutController::class, 'calculate']
-);
-
 
 
 /*
@@ -200,127 +102,146 @@ Route::post(
 |--------------------------------------------------------------------------
 */
 
-
 Route::middleware('auth:sanctum')->group(function () {
 
 
     /*
-    | Addresses
+    |--------------------------------------------------------------------------
+    | Cart
+    |--------------------------------------------------------------------------
     */
 
-    Route::get(
-        '/addresses',
+    Route::get('/cart',
+        [CartController::class, 'index']
+    );
+
+    Route::post('/cart/items',
+        [CartController::class, 'store']
+    );
+
+    Route::put('/cart/items/{id}',
+        [CartController::class, 'update']
+    );
+
+    Route::delete('/cart/items/{id}',
+        [CartController::class, 'destroy']
+    );
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Coupon / Checkout
+    |--------------------------------------------------------------------------
+    */
+
+    Route::post('/coupons/validate',
+        [CouponController::class, 'validateCoupon']
+    );
+
+    Route::post('/checkout/calculate',
+        [CheckoutController::class, 'calculate']
+    );
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Addresses
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/addresses',
         [AddressController::class, 'index']
     );
 
-
-    Route::post(
-        '/addresses',
+    Route::post('/addresses',
         [AddressController::class, 'store']
     );
 
-
-    Route::get(
-        '/addresses/{id}',
+    Route::get('/addresses/{id}',
         [AddressController::class, 'show']
     );
 
-
-    Route::put(
-        '/addresses/{id}',
+    Route::put('/addresses/{id}',
         [AddressController::class, 'update']
     );
 
-
-    Route::delete(
-        '/addresses/{id}',
+    Route::delete('/addresses/{id}',
         [AddressController::class, 'destroy']
     );
 
 
 
     /*
+    |--------------------------------------------------------------------------
     | Favorites
+    |--------------------------------------------------------------------------
     */
 
-
-    Route::get(
-        '/favorites',
+    Route::get('/favorites',
         [FavoriteController::class, 'index']
     );
 
-
-    Route::post(
-        '/favorites',
+    Route::post('/favorites',
         [FavoriteController::class, 'store']
     );
 
-
-    Route::delete(
-        '/favorites/{productId}',
+    Route::delete('/favorites/{productId}',
         [FavoriteController::class, 'destroy']
     );
 
 
 
     /*
+    |--------------------------------------------------------------------------
     | Reviews
+    |--------------------------------------------------------------------------
     */
 
-
-    Route::post(
-        '/products/{productId}/reviews',
+    Route::post('/products/{productId}/reviews',
         [ReviewController::class, 'store']
     );
 
 
 
     /*
+    |--------------------------------------------------------------------------
     | Orders
+    |--------------------------------------------------------------------------
     */
 
-
-    Route::get(
-        '/orders',
+    Route::get('/orders',
         [OrderController::class, 'index']
     );
 
-
-    Route::post(
-        '/orders',
+    Route::post('/orders',
         [OrderController::class, 'store']
     );
 
-
-    Route::get(
-        '/orders/{id}',
+    Route::get('/orders/{id}',
         [OrderController::class, 'show']
     );
 
-
-    Route::post(
-        '/orders/{id}/cancel',
+    Route::post('/orders/{id}/cancel',
         [OrderController::class, 'cancel']
     );
 
 
 
     /*
+    |--------------------------------------------------------------------------
     | Payments
+    |--------------------------------------------------------------------------
     */
 
-
-    Route::post(
-        '/payments/{orderId}/start',
+    Route::post('/payments/{orderId}/start',
         [PaymentController::class, 'start']
     );
 
-
-    Route::get(
-        '/payments/{orderId}/status',
+    Route::get('/payments/{orderId}/status',
         [PaymentController::class, 'status']
     );
-
 
 });
 
@@ -332,113 +253,70 @@ Route::middleware('auth:sanctum')->group(function () {
 |--------------------------------------------------------------------------
 */
 
-
 Route::middleware([
     'auth:sanctum',
     'admin',
 ])->group(function () {
 
 
-
-    /*
-    | Category Attributes
-    */
-
-
-    Route::post(
-        '/categories/{categoryId}/attributes',
+    Route::post('/categories/{categoryId}/attributes',
         [CategoryAttributeController::class, 'store']
     );
 
 
-    Route::put(
-        '/attributes/{id}',
+    Route::put('/attributes/{id}',
         [CategoryAttributeController::class, 'update']
     );
 
 
-    Route::delete(
-        '/attributes/{id}',
+    Route::delete('/attributes/{id}',
         [CategoryAttributeController::class, 'destroy']
     );
 
 
 
-    /*
-    | Product Attributes
-    */
-
-
-    Route::post(
-        '/products/{productId}/attributes',
+    Route::post('/products/{productId}/attributes',
         [ProductAttributeValueController::class, 'store']
     );
 
 
-
-    /*
-    | Product Images
-    */
-
-
-    Route::post(
-        '/products/{productId}/images',
+    Route::post('/products/{productId}/images',
         [ProductImageController::class, 'store']
     );
 
 
-    Route::delete(
-        '/images/{id}',
+    Route::delete('/images/{id}',
         [ProductImageController::class, 'destroy']
     );
 
 
-
-    /*
-    | Product Variants
-    */
-
-
-    Route::post(
-        '/products/{productId}/variants',
+    Route::post('/products/{productId}/variants',
         [ProductVariantController::class, 'store']
     );
 
 
-    Route::put(
-        '/variants/{id}',
+    Route::put('/variants/{id}',
         [ProductVariantController::class, 'update']
     );
 
 
-    Route::delete(
-        '/variants/{id}',
+    Route::delete('/variants/{id}',
         [ProductVariantController::class, 'destroy']
     );
 
 
-
-    /*
-    | Variant Values
-    */
-
-
-    Route::post(
-        '/variants/{variantId}/values',
+    Route::post('/variants/{variantId}/values',
         [VariantValueController::class, 'store']
     );
 
 
-    Route::put(
-        '/variant-values/{id}',
+    Route::put('/variant-values/{id}',
         [VariantValueController::class, 'update']
     );
 
 
-    Route::delete(
-        '/variant-values/{id}',
+    Route::delete('/variant-values/{id}',
         [VariantValueController::class, 'destroy']
     );
-
 
 });

@@ -14,15 +14,13 @@ class CartController extends Controller
 {
     public function index(Request $request)
     {
-        $validated = $request->validate([
-            'session_id' => 'required|string|max:100',
-        ]);
+        $userId = auth()->id();
 
         $cart = Cart::with([
             'items.product',
             'items.variant.values.attribute',
         ])
-            ->where('session_id', $validated['session_id'])
+            ->where('user_id', $userId)
             ->first();
 
         if (!$cart) {
@@ -40,15 +38,16 @@ class CartController extends Controller
         ]);
     }
 
+
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'session_id' => 'required|string|max:100',
             'product_id' => 'required|integer|exists:products,id',
             'product_variant_id' =>
                 'nullable|integer|exists:product_variants,id',
             'quantity' => 'required|integer|min:1|max:100',
         ]);
+
 
         $product = Product::where(
             'id',
@@ -56,6 +55,7 @@ class CartController extends Controller
         )
             ->where('status', 'active')
             ->first();
+
 
         if (!$product) {
             throw ValidationException::withMessages([
@@ -65,9 +65,12 @@ class CartController extends Controller
             ]);
         }
 
+
         $variant = null;
 
+
         if (!empty($validated['product_variant_id'])) {
+
             $variant = ProductVariant::where(
                 'id',
                 $validated['product_variant_id']
@@ -82,6 +85,7 @@ class CartController extends Controller
                 )
                 ->first();
 
+
             if (!$variant) {
                 throw ValidationException::withMessages([
                     'product_variant_id' => [
@@ -91,10 +95,13 @@ class CartController extends Controller
             }
         }
 
+
+
         $cart = Cart::firstOrCreate([
-            'session_id' =>
-                $validated['session_id'],
+            'user_id' => auth()->id(),
         ]);
+
+
 
         $item = CartItem::where(
             'cart_id',
@@ -110,15 +117,22 @@ class CartController extends Controller
             )
             ->first();
 
+
+
         $newQuantity =
             ($item?->quantity ?? 0)
             + $validated['quantity'];
+
+
 
         $availableStock = $variant
             ? $variant->stock
             : $product->stock;
 
+
+
         if ($newQuantity > $availableStock) {
+
             throw ValidationException::withMessages([
                 'quantity' => [
                     'Requested quantity exceeds available stock.',
@@ -126,18 +140,26 @@ class CartController extends Controller
             ]);
         }
 
+
+
         $price = $this->resolvePrice(
             $product,
             $variant
         );
 
+
+
         if ($item) {
+
             $item->update([
                 'quantity' => $newQuantity,
                 'price' => $price,
             ]);
+
         } else {
+
             CartItem::create([
+
                 'cart_id' =>
                     $cart->id,
 
@@ -145,17 +167,18 @@ class CartController extends Controller
                     $product->id,
 
                 'product_variant_id' =>
-                    $validated[
-                        'product_variant_id'
-                    ] ?? null,
+                    $validated['product_variant_id'] ?? null,
 
                 'quantity' =>
                     $validated['quantity'],
 
                 'price' =>
                     $price,
+
             ]);
         }
+
+
 
         return response()->json([
             'success' => true,
@@ -167,24 +190,33 @@ class CartController extends Controller
         ]);
     }
 
+
+
     public function update(
         Request $request,
         int $id
     ) {
+
         $validated = $request->validate([
-            'session_id' => 'required|string|max:100',
             'quantity' => 'required|integer|min:1|max:100',
         ]);
 
+
+
         $cart = Cart::where(
-            'session_id',
-            $validated['session_id']
+            'user_id',
+            auth()->id()
         )->firstOrFail();
+
+
 
         $item = CartItem::where(
             'cart_id',
             $cart->id
-        )->findOrFail($id);
+        )
+            ->findOrFail($id);
+
+
 
         $product = Product::where(
             'id',
@@ -196,7 +228,10 @@ class CartController extends Controller
             )
             ->first();
 
+
+
         if (!$product) {
+
             throw ValidationException::withMessages([
                 'product_id' => [
                     'Product is not available.',
@@ -204,9 +239,14 @@ class CartController extends Controller
             ]);
         }
 
+
+
         $variant = null;
 
+
+
         if ($item->product_variant_id) {
+
             $variant = ProductVariant::where(
                 'id',
                 $item->product_variant_id
@@ -221,7 +261,10 @@ class CartController extends Controller
                 )
                 ->first();
 
+
+
             if (!$variant) {
+
                 throw ValidationException::withMessages([
                     'product_variant_id' => [
                         'Selected variant is not available.',
@@ -230,14 +273,16 @@ class CartController extends Controller
             }
         }
 
+
+
         $availableStock = $variant
             ? $variant->stock
             : $product->stock;
 
-        if (
-            $validated['quantity']
-            > $availableStock
-        ) {
+
+
+        if ($validated['quantity'] > $availableStock) {
+
             throw ValidationException::withMessages([
                 'quantity' => [
                     'Requested quantity exceeds available stock.',
@@ -245,18 +290,21 @@ class CartController extends Controller
             ]);
         }
 
+
+
         $price = $this->resolvePrice(
             $product,
             $variant
         );
 
-        $item->update([
-            'quantity' =>
-                $validated['quantity'],
 
-            'price' =>
-                $price,
+
+        $item->update([
+            'quantity' => $validated['quantity'],
+            'price' => $price,
         ]);
+
+
 
         return response()->json([
             'success' => true,
@@ -265,25 +313,33 @@ class CartController extends Controller
         ]);
     }
 
+
+
+
     public function destroy(
         Request $request,
         int $id
     ) {
-        $validated = $request->validate([
-            'session_id' => 'required|string|max:100',
-        ]);
+
 
         $cart = Cart::where(
-            'session_id',
-            $validated['session_id']
+            'user_id',
+            auth()->id()
         )->firstOrFail();
+
+
 
         $item = CartItem::where(
             'cart_id',
             $cart->id
-        )->findOrFail($id);
+        )
+            ->findOrFail($id);
+
+
 
         $item->delete();
+
+
 
         return response()->json([
             'success' => true,
@@ -292,11 +348,16 @@ class CartController extends Controller
         ]);
     }
 
+
+
+
     private function resolvePrice(
         Product $product,
         ?ProductVariant $variant
     ): float {
+
         if ($variant) {
+
             return (float) (
                 $variant->discount_price
                 ?? $variant->price
@@ -304,6 +365,7 @@ class CartController extends Controller
                 ?? $product->price
             );
         }
+
 
         return (float) (
             $product->discount_price

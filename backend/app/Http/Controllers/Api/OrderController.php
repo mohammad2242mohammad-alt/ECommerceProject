@@ -38,6 +38,7 @@ class OrderController extends Controller
         ]);
     }
 
+
     public function show(
         Request $request,
         int $id
@@ -59,13 +60,16 @@ class OrderController extends Controller
         ]);
     }
 
+
     public function store(
         Request $request,
         CheckoutService $checkoutService
     ) {
+
         $validated = $request->validate([
+
             'session_id' => [
-                'required',
+                'nullable',
                 'string',
                 'max:100',
             ],
@@ -80,9 +84,12 @@ class OrderController extends Controller
                 'nullable',
                 'string',
             ],
+
         ]);
 
+
         $user = $request->user();
+
 
         $address = Address::where(
             'user_id',
@@ -91,26 +98,53 @@ class OrderController extends Controller
             $validated['address_id']
         );
 
-        $cart = Cart::with([
+
+        /*
+        |--------------------------------------------------------------------------
+        | Find Cart
+        |--------------------------------------------------------------------------
+        */
+
+        $cartQuery = Cart::with([
             'items.product',
             'items.variant',
-        ])
-            ->where(
+        ]);
+
+
+        if ($user) {
+
+            $cartQuery->where(
+                'user_id',
+                $user->id
+            );
+
+        } else {
+
+            $cartQuery->where(
                 'session_id',
                 $validated['session_id']
-            )
-            ->first();
+            );
+
+        }
+
+
+        $cart = $cartQuery->first();
+
 
         if (
             !$cart ||
             $cart->items->isEmpty()
         ) {
+
             return response()->json([
                 'success' => false,
                 'message' => 'Cart is empty',
                 'errors' => null,
             ], 400);
+
         }
+
+
 
         return DB::transaction(function () use (
             $user,
@@ -119,15 +153,11 @@ class OrderController extends Controller
             $validated,
             $checkoutService
         ) {
-            /*
-            |--------------------------------------------------------------------------
-            | Final stock / availability check
-            |--------------------------------------------------------------------------
-            */
 
-            foreach (
-                $cart->items as $item
-            ) {
+
+            foreach ($cart->items as $item) {
+
+
                 $product =
                     Product::lockForUpdate()
                         ->where(
@@ -140,19 +170,22 @@ class OrderController extends Controller
                         )
                         ->first();
 
+
                 if (!$product) {
+
                     throw ValidationException::withMessages([
                         'product' => [
-                            'Product ID ' .
-                            $item->product_id .
-                            ' is not available.',
+                            'Product is not available.',
                         ],
                     ]);
+
                 }
 
-                if (
-                    $item->product_variant_id
-                ) {
+
+
+                if ($item->product_variant_id) {
+
+
                     $variant =
                         ProductVariant::lockForUpdate()
                             ->where(
@@ -169,69 +202,72 @@ class OrderController extends Controller
                             )
                             ->first();
 
+
+
                     if (!$variant) {
+
                         throw ValidationException::withMessages([
                             'variant' => [
-                                'Selected variant for product ID ' .
-                                $product->id .
-                                ' is not available.',
+                                'Variant is not available.',
                             ],
                         ]);
+
                     }
+
+
 
                     if (
                         $variant->stock <
                         $item->quantity
                     ) {
+
                         throw ValidationException::withMessages([
                             'stock' => [
-                                'Insufficient variant stock for product ID ' .
-                                $product->id,
+                                'Insufficient stock.',
                             ],
                         ]);
+
                     }
+
+
                 } else {
+
+
                     if (
                         $product->stock <
                         $item->quantity
                     ) {
+
                         throw ValidationException::withMessages([
                             'stock' => [
-                                'Insufficient stock for product ID ' .
-                                $product->id,
+                                'Insufficient stock.',
                             ],
                         ]);
+
                     }
+
                 }
+
             }
 
-            /*
-            |--------------------------------------------------------------------------
-            | Recalculate server-side price
-            |--------------------------------------------------------------------------
-            */
+
 
             $calculation =
                 $checkoutService->calculate(
                     $cart,
-                    $validated[
-                        'coupon_code'
-                    ] ?? null,
+                    $validated['coupon_code'] ?? null,
                     $user->id
                 );
 
-            /*
-            |--------------------------------------------------------------------------
-            | Create order
-            |--------------------------------------------------------------------------
-            */
+
 
             $order = Order::create([
+
                 'user_id' =>
                     $user->id,
 
                 'session_id' =>
-                    $validated['session_id'],
+                    $validated['session_id'] ?? null,
 
                 'order_number' =>
                     'ORD-' .
@@ -242,6 +278,7 @@ class OrderController extends Controller
                     ),
 
                 'address_snapshot' => [
+
                     'title' =>
                         $address->title,
 
@@ -263,18 +300,15 @@ class OrderController extends Controller
                     'postal_code' =>
                         $address->postal_code,
 
-                    'latitude' =>
-                        $address->latitude,
-
-                    'longitude' =>
-                        $address->longitude,
                 ],
+
 
                 'status' =>
                     'pending',
 
                 'order_status' =>
                     'pending',
+
 
                 'subtotal' =>
                     $calculation['subtotal'],
@@ -293,95 +327,123 @@ class OrderController extends Controller
 
                 'payment_status' =>
                     'unpaid',
-            ]);
 
-            /*
+            ]);
+                        /*
             |--------------------------------------------------------------------------
-            | Order items + stock decrement
+            | Create Order Items + Decrease Stock
             |--------------------------------------------------------------------------
             */
 
-            foreach (
-                $cart->items as $item
-            ) {
+            foreach ($cart->items as $item) {
+
+
                 $product =
                     Product::findOrFail(
                         $item->product_id
                     );
 
+
                 $variant = null;
 
-                if (
-                    $item->product_variant_id
-                ) {
+
+                if ($item->product_variant_id) {
+
                     $variant =
                         ProductVariant::findOrFail(
                             $item->product_variant_id
                         );
+
                 }
+
 
                 $unitPrice =
                     (float) $item->price;
+
 
                 $lineTotal =
                     $unitPrice *
                     (int) $item->quantity;
 
+
+
                 OrderItem::create([
+
                     'order_id' =>
                         $order->id,
+
 
                     'product_id' =>
                         $item->product_id,
 
+
                     'product_variant_id' =>
                         $item->product_variant_id,
+
 
                     'product_name' =>
                         $product->name,
 
+
                     'product_name_snapshot' =>
                         $product->name,
+
 
                     'sku_snapshot' =>
                         $variant?->sku
                         ?? $product->sku,
 
+
                     'quantity' =>
                         $item->quantity,
+
 
                     'price' =>
                         $unitPrice,
 
+
                     'unit_price' =>
                         $unitPrice,
+
 
                     'discount_amount' =>
                         0,
 
+
                     'subtotal' =>
                         $lineTotal,
 
+
                     'line_total' =>
                         $lineTotal,
+
                 ]);
 
+
+
                 if ($variant) {
+
                     $variant->decrement(
                         'stock',
                         $item->quantity
                     );
+
                 } else {
+
                     $product->decrement(
                         'stock',
                         $item->quantity
                     );
+
                 }
+
             }
+
+
 
             /*
             |--------------------------------------------------------------------------
-            | Coupon usage
+            | Coupon Usage
             |--------------------------------------------------------------------------
             */
 
@@ -389,69 +451,91 @@ class OrderController extends Controller
                 $calculation['coupon'] &&
                 $calculation['discount'] > 0
             ) {
+
+
                 CouponUsage::create([
+
                     'coupon_id' =>
-                        $calculation[
-                            'coupon'
-                        ]->id,
+                        $calculation['coupon']->id,
+
 
                     'user_id' =>
                         $user->id,
 
+
                     'order_id' =>
                         $order->id,
 
-                    'discount_amount' =>
-                        $calculation[
-                            'discount'
-                        ],
 
-                    'created_at' =>
-                        now(),
+                    'discount_amount' =>
+                        $calculation['discount'],
+
                 ]);
+
             }
+
+
 
             /*
             |--------------------------------------------------------------------------
-            | Clear cart
+            | Clear Cart
             |--------------------------------------------------------------------------
             */
 
             $cart->items()->delete();
 
+
+
             return response()->json([
+
                 'success' => true,
+
 
                 'message' =>
                     'Order created successfully',
+
 
                 'data' =>
                     $order->load([
                         'items',
                         'payment',
                     ]),
+
+
             ], 201);
+
+
         });
+
     }
+
+
 
     public function cancel(
         Request $request,
         int $id
     ) {
+
+
         return DB::transaction(function () use (
             $request,
             $id
         ) {
-            $order = Order::with([
-                'items',
-                'payment',
-            ])
+
+
+            $order =
+                Order::with([
+                    'items',
+                    'payment',
+                ])
                 ->where(
                     'user_id',
                     $request->user()->id
                 )
                 ->lockForUpdate()
                 ->findOrFail($id);
+
+
 
             if (
                 !in_array(
@@ -463,67 +547,99 @@ class OrderController extends Controller
                     true
                 )
             ) {
+
+
                 return response()->json([
+
                     'success' => false,
 
                     'message' =>
                         'This order cannot be cancelled',
 
                     'errors' => null,
+
                 ], 422);
+
+
             }
 
-            foreach (
-                $order->items as $item
-            ) {
-                if (
-                    $item->product_variant_id
-                ) {
+
+
+            foreach ($order->items as $item) {
+
+
+                if ($item->product_variant_id) {
+
+
                     ProductVariant::where(
                         'id',
                         $item->product_variant_id
-                    )->increment(
+                    )
+                    ->increment(
                         'stock',
                         $item->quantity
                     );
+
+
                 } else {
+
+
                     Product::where(
                         'id',
                         $item->product_id
-                    )->increment(
+                    )
+                    ->increment(
                         'stock',
                         $item->quantity
                     );
+
+
                 }
+
             }
+
+
 
             if (
                 $order->payment &&
-                $order->payment->status ===
-                    'paid'
+                $order->payment->status === 'paid'
             ) {
+
+
                 $order->payment->update([
+
                     'status' =>
                         'refunded',
+
                 ]);
+
 
                 $order->payment_status =
                     'refunded';
+
             }
+
+
 
             $order->order_status =
                 'cancelled';
 
+
             $order->status =
                 'cancelled';
 
+
             $order->save();
 
+
+
             return response()->json([
+
                 'success' => true,
 
                 'message' =>
                     'Order cancelled successfully',
+
 
                 'data' =>
                     $order
@@ -532,7 +648,11 @@ class OrderController extends Controller
                             'items',
                             'payment',
                         ]),
+
             ]);
+
         });
+
     }
+
 }

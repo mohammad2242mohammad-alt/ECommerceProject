@@ -14,13 +14,19 @@ class CheckoutController extends Controller
         CheckoutService $checkoutService
     ) {
         $validated = $request->validate([
-            'session_id' => 'required|string',
+            'session_id' => 'nullable|string',
             'coupon_code' => 'nullable|string'
         ]);
 
-        $cart = Cart::with('items')
-            ->where('session_id', $validated['session_id'])
-            ->first();
+        $cartQuery = Cart::with('items');
+
+        if ($request->user()) {
+            $cartQuery->where('user_id', $request->user()->id);
+        } elseif (!empty($validated['session_id'])) {
+            $cartQuery->where('session_id', $validated['session_id']);
+        }
+
+        $cart = $cartQuery->first();
 
         if (!$cart || $cart->items->isEmpty()) {
             return response()->json([
