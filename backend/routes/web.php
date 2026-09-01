@@ -1,18 +1,24 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
+
 use App\Http\Controllers\Admin\AdminAuthController;
-use App\Http\Controllers\Admin\AdminCategoryAttributeController;
-use App\Http\Controllers\Admin\AdminCategoryController;
-use App\Http\Controllers\Admin\AdminCouponController;
 use App\Http\Controllers\Admin\AdminDashboardController;
-use App\Http\Controllers\Admin\AdminOrderController;
-use App\Http\Controllers\Admin\AdminProductAttributeController;
+
+use App\Http\Controllers\Admin\AdminCategoryController;
+use App\Http\Controllers\Admin\AdminCategoryAttributeController;
+
 use App\Http\Controllers\Admin\AdminProductController;
 use App\Http\Controllers\Admin\AdminProductImageController;
+use App\Http\Controllers\Admin\AdminProductAttributeController;
 use App\Http\Controllers\Admin\AdminProductVariantController;
-use App\Http\Controllers\Admin\AdminReviewController;
+
+use App\Http\Controllers\Admin\AdminOrderController;
+use App\Http\Controllers\Admin\AdminCouponController;
 use App\Http\Controllers\Admin\AdminSettingController;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\AdminReviewController;
+use App\Http\Controllers\Admin\AdminUserController;
+use App\Http\Controllers\Admin\AdminBannerController;
 
 
 Route::get('/', function () {
@@ -23,13 +29,6 @@ Route::get('/', function () {
 Route::prefix('admin')
     ->name('admin.')
     ->group(function () {
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Admin Authentication
-        |--------------------------------------------------------------------------
-        */
 
 
         Route::get(
@@ -48,13 +47,6 @@ Route::prefix('admin')
         Route::middleware('admin.web')
             ->group(function () {
 
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | Dashboard
-                |--------------------------------------------------------------------------
-                */
 
 
                 Route::get(
@@ -76,109 +68,43 @@ Route::prefix('admin')
                 |--------------------------------------------------------------------------
                 */
 
+                Route::resource(
+                    'categories',
+                    AdminCategoryController::class
+                )->except([
+                    'show'
+                ]);
+
+
+                Route::post(
+                    '/categories/{category}/toggle',
+                    [AdminCategoryController::class,'toggle']
+                )->name('categories.toggle');
+
+
 
                 Route::get(
                     '/categories/{category}/attributes',
-                    [AdminCategoryAttributeController::class, 'index']
+                    [AdminCategoryAttributeController::class,'index']
                 )->name('categories.attributes.index');
 
 
                 Route::post(
                     '/categories/{category}/attributes',
-                    [AdminCategoryAttributeController::class, 'store']
+                    [AdminCategoryAttributeController::class,'store']
                 )->name('categories.attributes.store');
 
 
                 Route::put(
                     '/categories/{category}/attributes/{attribute}',
-                    [AdminCategoryAttributeController::class, 'update']
+                    [AdminCategoryAttributeController::class,'update']
                 )->name('categories.attributes.update');
 
 
                 Route::delete(
                     '/categories/{category}/attributes/{attribute}',
-                    [AdminCategoryAttributeController::class, 'destroy']
+                    [AdminCategoryAttributeController::class,'destroy']
                 )->name('categories.attributes.destroy');
-
-
-                Route::post(
-                    '/categories/{category}/toggle',
-                    [AdminCategoryController::class, 'toggle']
-                )->name('categories.toggle');
-
-
-                Route::resource(
-                    'categories',
-                    AdminCategoryController::class
-                )->except([
-                    'show',
-                ]);
-
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | Product Images
-                |--------------------------------------------------------------------------
-                */
-
-
-                Route::post(
-                    '/products/{product}/images',
-                    [AdminProductImageController::class, 'store']
-                )->name('products.images.store');
-
-
-                Route::post(
-                    '/products/{product}/images/{image}/primary',
-                    [AdminProductImageController::class, 'makePrimary']
-                )->name('products.images.primary');
-
-
-                Route::delete(
-                    '/products/{product}/images/{image}',
-                    [AdminProductImageController::class, 'destroy']
-                )->name('products.images.destroy');
-
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | Product Attributes
-                |--------------------------------------------------------------------------
-                */
-
-
-                Route::post(
-                    '/products/{product}/attributes',
-                    [AdminProductAttributeController::class, 'update']
-                )->name('products.attributes.update');
-
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | Product Variants
-                |--------------------------------------------------------------------------
-                */
-
-
-                Route::post(
-                    '/products/{product}/variants',
-                    [AdminProductVariantController::class, 'store']
-                )->name('products.variants.store');
-
-
-                Route::put(
-                    '/products/{product}/variants/{variant}',
-                    [AdminProductVariantController::class, 'update']
-                )->name('products.variants.update');
-
-
-                Route::delete(
-                    '/products/{product}/variants/{variant}',
-                    [AdminProductVariantController::class, 'destroy']
-                )->name('products.variants.destroy');
 
 
 
@@ -188,19 +114,63 @@ Route::prefix('admin')
                 |--------------------------------------------------------------------------
                 */
 
-
-                Route::post(
-                    '/products/{product}/toggle',
-                    [AdminProductController::class, 'toggle']
-                )->name('products.toggle');
-
-
                 Route::resource(
                     'products',
                     AdminProductController::class
                 )->except([
-                    'show',
+                    'show'
                 ]);
+
+
+                Route::post(
+                    '/products/{product}/toggle',
+                    [AdminProductController::class,'toggle']
+                )->name('products.toggle');
+
+
+
+                Route::post(
+                    '/products/{product}/images',
+                    [AdminProductImageController::class,'store']
+                )->name('products.images.store');
+
+
+                Route::post(
+                    '/products/{product}/images/{image}/primary',
+                    [AdminProductImageController::class,'makePrimary']
+                )->name('products.images.primary');
+
+
+                Route::delete(
+                    '/products/{product}/images/{image}',
+                    [AdminProductImageController::class,'destroy']
+                )->name('products.images.destroy');
+
+
+
+                Route::post(
+                    '/products/{product}/attributes',
+                    [AdminProductAttributeController::class,'update']
+                )->name('products.attributes.update');
+
+
+
+                Route::post(
+                    '/products/{product}/variants',
+                    [AdminProductVariantController::class,'store']
+                )->name('products.variants.store');
+
+
+                Route::put(
+                    '/products/{product}/variants/{variant}',
+                    [AdminProductVariantController::class,'update']
+                )->name('products.variants.update');
+
+
+                Route::delete(
+                    '/products/{product}/variants/{variant}',
+                    [AdminProductVariantController::class,'destroy']
+                )->name('products.variants.destroy');
 
 
 
@@ -210,22 +180,21 @@ Route::prefix('admin')
                 |--------------------------------------------------------------------------
                 */
 
-
                 Route::get(
                     '/orders',
-                    [AdminOrderController::class, 'index']
+                    [AdminOrderController::class,'index']
                 )->name('orders.index');
 
 
                 Route::get(
                     '/orders/{order}',
-                    [AdminOrderController::class, 'show']
+                    [AdminOrderController::class,'show']
                 )->name('orders.show');
 
 
                 Route::put(
                     '/orders/{order}/status',
-                    [AdminOrderController::class, 'updateStatus']
+                    [AdminOrderController::class,'updateStatus']
                 )->name('orders.status');
 
 
@@ -236,19 +205,18 @@ Route::prefix('admin')
                 |--------------------------------------------------------------------------
                 */
 
-
-                Route::post(
-                    '/coupons/{coupon}/toggle',
-                    [AdminCouponController::class, 'toggle']
-                )->name('coupons.toggle');
-
-
                 Route::resource(
                     'coupons',
                     AdminCouponController::class
                 )->except([
-                    'show',
+                    'show'
                 ]);
+
+
+                Route::post(
+                    '/coupons/{coupon}/toggle',
+                    [AdminCouponController::class,'toggle']
+                )->name('coupons.toggle');
 
 
 
@@ -258,16 +226,15 @@ Route::prefix('admin')
                 |--------------------------------------------------------------------------
                 */
 
-
                 Route::get(
                     '/settings',
-                    [AdminSettingController::class, 'index']
+                    [AdminSettingController::class,'index']
                 )->name('settings.index');
 
 
                 Route::put(
                     '/settings',
-                    [AdminSettingController::class, 'update']
+                    [AdminSettingController::class,'update']
                 )->name('settings.update');
 
 
@@ -278,24 +245,65 @@ Route::prefix('admin')
                 |--------------------------------------------------------------------------
                 */
 
-
                 Route::get(
                     '/reviews',
-                    [AdminReviewController::class, 'index']
+                    [AdminReviewController::class,'index']
                 )->name('reviews.index');
 
 
                 Route::put(
                     '/reviews/{review}/status',
-                    [AdminReviewController::class, 'updateStatus']
+                    [AdminReviewController::class,'updateStatus']
                 )->name('reviews.status');
 
 
                 Route::delete(
                     '/reviews/{review}',
-                    [AdminReviewController::class, 'destroy']
+                    [AdminReviewController::class,'destroy']
                 )->name('reviews.destroy');
 
 
+
+                /*
+                |--------------------------------------------------------------------------
+                | Users
+                |--------------------------------------------------------------------------
+                */
+
+                Route::get(
+                    '/users',
+                    [AdminUserController::class,'index']
+                )->name('users.index');
+
+
+                Route::post(
+                    '/users/{user}/toggle',
+                    [AdminUserController::class,'toggle']
+                )->name('users.toggle');
+
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Banners
+                |--------------------------------------------------------------------------
+                */
+
+                Route::resource(
+                    'banners',
+                    AdminBannerController::class
+                )->except([
+                    'show'
+                ]);
+
+
+                Route::post(
+                    '/banners/{banner}/toggle',
+                    [AdminBannerController::class,'toggle']
+                )->name('banners.toggle');
+
+
+
             });
+
     });
