@@ -10,9 +10,9 @@ class ProductCard extends StatelessWidget {
     required this.product,
   });
 
-  String formatPrice(double price) {
+  String formatPrice(int price) {
     return price
-        .toStringAsFixed(0)
+        .toString()
         .replaceAllMapped(
           RegExp(r'\B(?=(\d{3})+(?!\d))'),
           (match) => ',',
@@ -21,7 +21,8 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasDiscount = product.discountPrice != null &&
+    final hasDiscount =
+        product.discountPrice != null &&
         product.discountPrice! < product.price;
 
     return Container(
@@ -41,40 +42,21 @@ class ProductCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // تصویر محصول
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
-              child: SizedBox(
+              child: const SizedBox(
                 height: 150,
                 width: double.infinity,
-                child: product.image != null &&
-                        product.image!.isNotEmpty
-                    ? Image.network(
-                        product.image!,
-                        fit: BoxFit.contain,
-                        errorBuilder: (
-                          context,
-                          error,
-                          stackTrace,
-                        ) {
-                          return const Icon(
-                            Icons.image_not_supported_outlined,
-                            size: 50,
-                            color: Colors.grey,
-                          );
-                        },
-                      )
-                    : const Icon(
-                        Icons.image_outlined,
-                        size: 50,
-                        color: Colors.grey,
-                      ),
+                child: Icon(
+                  Icons.image_outlined,
+                  size: 50,
+                  color: Colors.grey,
+                ),
               ),
             ),
 
             const SizedBox(height: 10),
 
-            // نام محصول
             Text(
               product.name,
               maxLines: 2,
@@ -87,8 +69,7 @@ class ProductCard extends StatelessWidget {
 
             const SizedBox(height: 8),
 
-            // امتیاز
-            if (product.rating != null)
+            if (product.ratingAverage != null)
               Row(
                 children: [
                   const Icon(
@@ -98,7 +79,7 @@ class ProductCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    product.rating!.toStringAsFixed(1),
+                    product.ratingAverage!.toStringAsFixed(1),
                     style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -109,7 +90,6 @@ class ProductCard extends StatelessWidget {
 
             const Spacer(),
 
-            // قیمت
             if (hasDiscount) ...[
               Text(
                 '${formatPrice(product.price)} تومان',
