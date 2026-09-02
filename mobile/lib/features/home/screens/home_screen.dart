@@ -42,7 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 controller: _scrollController,
                 physics: const ClampingScrollPhysics(),
                 child: Column(
-                  children: const [
+                  children: [
                     HomeAppBar(),
                     SizedBox(height: 12),
                     SearchBox(),

@@ -10,61 +10,55 @@ class ProductSeeder extends Seeder
 {
     public function run(): void
     {
-        // پیدا کردن دسته‌بندی‌های موجود در دیتابیس
         $mobile = Category::where('slug', 'mobile-phones')->first();
         $laptop = Category::where('slug', 'laptops')->first();
         $headphone = Category::where('slug', 'headphones')->first();
 
-        // اگر دسته‌بندی‌ها وجود نداشتند، Seeder متوقف شود.
-        if (!$mobile || !$laptop || !$headphone) {
-            return;
-        }
-
         Product::updateOrCreate(
             ['slug' => 'samsung-galaxy-a55'],
             [
+                'category_id' => $mobile->id,
                 'name' => 'Samsung Galaxy A55',
-                'description' => 'گوشی موبایل سامسونگ Galaxy A55 با کیفیت بالا',
+                'sku' => 'A55-001',
+                'description' => 'گوشی موبایل سامسونگ Galaxy A55',
                 'price' => 18000000,
                 'discount_price' => 16500000,
-                'image' => 'assets/images/a55.png',
                 'stock' => 25,
-                'is_active' => true,
-                'rating' => 4.5,
-                'views' => 1250,
-                'category_id' => $mobile->id,
+                'status' => 'active',
+                'rating_average' => 4.5,
+                'rating_count' => 120,
             ]
         );
 
         Product::updateOrCreate(
             ['slug' => 'asus-vivobook'],
             [
+                'category_id' => $laptop->id,
                 'name' => 'ASUS VivoBook',
-                'description' => 'لپ‌تاپ مناسب برای کارهای روزمره و دانشجویی',
+                'sku' => 'ASUS-001',
+                'description' => 'لپ تاپ ایسوس',
                 'price' => 32000000,
                 'discount_price' => 29900000,
-                'image' => 'assets/images/laptop.png',
                 'stock' => 12,
-                'is_active' => true,
-                'rating' => 4.3,
-                'views' => 890,
-                'category_id' => $laptop->id,
+                'status' => 'active',
+                'rating_average' => 4.3,
+                'rating_count' => 80,
             ]
         );
 
         Product::updateOrCreate(
             ['slug' => 'wireless-headphone'],
             [
+                'category_id' => $headphone->id,
                 'name' => 'Wireless Headphone',
-                'description' => 'هدفون بی‌سیم با کیفیت صدای عالی',
+                'sku' => 'HEAD-001',
+                'description' => 'هدفون بی سیم',
                 'price' => 2500000,
                 'discount_price' => 2200000,
-                'image' => 'assets/images/headphone.png',
                 'stock' => 40,
-                'is_active' => true,
-                'rating' => 4.7,
-                'views' => 2100,
-                'category_id' => $headphone->id,
+                'status' => 'active',
+                'rating_average' => 4.7,
+                'rating_count' => 200,
             ]
         );
     }

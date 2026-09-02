@@ -5,40 +5,21 @@ class BannerSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final banners = [
-      'پیشنهاد ویژه امروز',
-      'تخفیف محصولات دیجیتال',
-      'جدیدترین کالاها',
-    ];
-
-    return SizedBox(
-      width: double.infinity,
+    return Container(
       height: 160,
-      child: PageView.builder(
-        itemCount: banners.length,
-        physics: const PageScrollPhysics(),
-        itemBuilder: (context, index) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                color: Colors.grey.shade300,
-              ),
-              child: Center(
-                child: Text(
-                  banners[index],
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: Colors.red,
+      ),
+      child: const Center(
+        child: Text(
+          'Banner Section',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 24,
+          ),
+        ),
       ),
     );
   }
