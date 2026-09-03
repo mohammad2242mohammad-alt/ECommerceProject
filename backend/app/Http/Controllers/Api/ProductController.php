@@ -17,7 +17,7 @@ class ProductController extends Controller
 
         $query = Product::query()
             ->with(['category', 'brand'])
-            ->where('is_active', 1);
+            ->where('status', 'active');
 
 
         if (!empty($validated['category_id'])) {
@@ -124,7 +124,7 @@ class ProductController extends Controller
             'variants.values.attribute'
 
         ])
-        ->where('is_active', 1)
+        ->where('status', 'active')
         ->findOrFail($id);
 
 

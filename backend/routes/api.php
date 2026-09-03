@@ -25,7 +25,6 @@ Route::prefix('auth')->group(function () {
 
     Route::post('/login', [AuthController::class, 'login']);
 
-
     Route::middleware('auth:sanctum')->group(function () {
 
         Route::post('/logout', [AuthController::class, 'logout']);
@@ -37,7 +36,6 @@ Route::prefix('auth')->group(function () {
 });
 
 
-
 /*
 |--------------------------------------------------------------------------
 | Categories
@@ -47,7 +45,6 @@ Route::prefix('auth')->group(function () {
 Route::get('/categories', [CategoryController::class, 'index']);
 
 Route::get('/categories/{id}', [CategoryController::class, 'show']);
-
 
 
 /*
@@ -77,7 +74,6 @@ Route::delete(
 );
 
 
-
 /*
 |--------------------------------------------------------------------------
 | Products
@@ -87,7 +83,6 @@ Route::delete(
 Route::get('/products', [ProductController::class, 'index']);
 
 Route::get('/products/{id}', [ProductController::class, 'show']);
-
 
 
 /*
@@ -105,7 +100,6 @@ Route::post(
     '/products/{productId}/attributes',
     [ProductAttributeValueController::class, 'store']
 );
-
 
 
 /*
@@ -128,7 +122,6 @@ Route::delete(
     '/images/{id}',
     [ProductImageController::class, 'destroy']
 );
-
 
 
 /*
@@ -158,7 +151,6 @@ Route::delete(
 );
 
 
-
 /*
 |--------------------------------------------------------------------------
 | Variant Values
@@ -186,43 +178,37 @@ Route::delete(
 );
 
 
-
 /*
 |--------------------------------------------------------------------------
-| Cart
+| Cart & Orders
 |--------------------------------------------------------------------------
 */
 
-Route::get(
-    '/cart',
-    [CartController::class, 'index']
-);
+Route::middleware('auth:sanctum')->group(function () {
 
+    Route::get(
+        '/cart',
+        [CartController::class, 'index']
+    );
 
-Route::post(
-    '/cart/items',
-    [CartController::class, 'store']
-);
+    Route::post(
+        '/cart/items',
+        [CartController::class, 'store']
+    );
 
+    Route::put(
+        '/cart/items/{id}',
+        [CartController::class, 'update']
+    );
 
-Route::put(
-    '/cart/items/{id}',
-    [CartController::class, 'update']
-);
+    Route::delete(
+        '/cart/items/{id}',
+        [CartController::class, 'destroy']
+    );
 
+    Route::post(
+        '/orders',
+        [OrderController::class, 'store']
+    );
 
-Route::delete(
-    '/cart/items/{id}',
-    [CartController::class, 'destroy']
-);
-
-/*
-|--------------------------------------------------------------------------
-| Orders
-|--------------------------------------------------------------------------
-*/
-
-Route::post(
-    '/orders',
-    [OrderController::class,'store']
-);
+});

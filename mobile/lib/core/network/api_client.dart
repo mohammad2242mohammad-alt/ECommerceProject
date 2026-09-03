@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 
 import '../constants/api_constants.dart';
 import '../errors/app_exception.dart';
+import '../storage/token_storage.dart';
 import 'models/api_response.dart';
 
 /// کلاینت مرکزی ارتباط Flutter با REST API.
@@ -14,9 +15,84 @@ import 'models/api_response.dart';
 class ApiClient {
   ApiClient({
     http.Client? client,
-  }) : _client = client ?? http.Client();
+    TokenStorage? tokenStorage,
+  })  : _client = client ?? http.Client(),
+        _tokenStorage = tokenStorage ?? TokenStorage();
 
   final http.Client _client;
+  final TokenStorage _tokenStorage;
+
+  /// ساخت Headerهای مشترک تمام درخواست‌ها.
+  ///
+  /// اگر کاربر لاگین باشد، توکن به صورت خودکار
+  /// در Authorization Header قرار می‌گیرد.
+  Future<Map<String, String>> _buildHeaders({
+    Map<String, String>? headers,
+    bool contentTypeJson = false,
+  }) async {
+    final token = await _tokenStorage.getToken();
+
+    return {
+      'Accept': 'application/json',
+      if (contentTypeJson) 'Content-Type': 'application/json',
+      if (token != null && token.isNotEmpty)
+        'Authorization': 'Bearer $token',
+      ...?headers,
+    };
+  }
+
+  /// پردازش استاندارد پاسخ API.
+  Future<ApiResponse<T>> _handleResponse<T>(
+    http.Response response, {
+    T Function(dynamic)? fromData,
+  }) async {
+    if (response.statusCode >= 500) {
+      throw ServerException(
+        'خطا در سرور',
+        code: response.statusCode.toString(),
+      );
+    }
+
+    if (response.statusCode < 200 ||
+        response.statusCode >= 300) {
+      throw ApiException(
+        'خطا در درخواست API',
+        code: response.statusCode.toString(),
+      );
+    }
+
+    final dynamic decoded;
+
+    try {
+      decoded = jsonDecode(response.body);
+    } catch (e) {
+      throw ParseException(
+        'پاسخ سرور قابل پردازش نیست',
+        code: 'INVALID_JSON',
+      );
+    }
+
+    if (decoded is! Map<String, dynamic>) {
+      throw ParseException(
+        'فرمت پاسخ API نامعتبر است',
+        code: 'INVALID_RESPONSE',
+      );
+    }
+
+    final apiResponse = ApiResponse<T>.fromJson(
+      decoded,
+      fromData: fromData,
+    );
+
+    if (!apiResponse.success) {
+      throw ApiException(
+        apiResponse.message ?? 'درخواست API ناموفق بود',
+        code: 'API_ERROR',
+      );
+    }
+
+    return apiResponse;
+  }
 
   /// ارسال درخواست GET به Backend.
   Future<ApiResponse<T>> get<T>(
@@ -39,10 +115,9 @@ class ApiClient {
     try {
       response = await _client.get(
         uri,
-        headers: {
-          'Accept': 'application/json',
-          ...?headers,
-        },
+        headers: await _buildHeaders(
+          headers: headers,
+        ),
       );
     } catch (e) {
       throw NetworkException(
@@ -51,52 +126,10 @@ class ApiClient {
       );
     }
 
-    if (response.statusCode >= 500) {
-      throw ServerException(
-        'خطا در سرور',
-        code: response.statusCode.toString(),
-      );
-    }
-
-    if (response.statusCode < 200 ||
-        response.statusCode >= 300) {
-      throw ApiException(
-        'خطا در درخواست API',
-        code: response.statusCode.toString(),
-      );
-    }
-
-    final dynamic decoded;
-
-    try {
-      decoded = jsonDecode(response.body);
-    } catch (e) {
-      throw ParseException(
-        'پاسخ سرور قابل پردازش نیست',
-        code: 'INVALID_JSON',
-      );
-    }
-
-    if (decoded is! Map<String, dynamic>) {
-      throw ParseException(
-        'فرمت پاسخ API نامعتبر است',
-        code: 'INVALID_RESPONSE',
-      );
-    }
-
-    final apiResponse = ApiResponse<T>.fromJson(
-      decoded,
+    return _handleResponse<T>(
+      response,
       fromData: fromData,
     );
-
-    if (!apiResponse.success) {
-      throw ApiException(
-        apiResponse.message ?? 'درخواست API ناموفق بود',
-        code: 'API_ERROR',
-      );
-    }
-
-    return apiResponse;
   }
 
   /// ارسال درخواست POST به Backend.
@@ -115,11 +148,10 @@ class ApiClient {
     try {
       response = await _client.post(
         uri,
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          ...?headers,
-        },
+        headers: await _buildHeaders(
+          headers: headers,
+          contentTypeJson: true,
+        ),
         body: body == null ? null : jsonEncode(body),
       );
     } catch (e) {
@@ -129,52 +161,10 @@ class ApiClient {
       );
     }
 
-    if (response.statusCode >= 500) {
-      throw ServerException(
-        'خطا در سرور',
-        code: response.statusCode.toString(),
-      );
-    }
-
-    if (response.statusCode < 200 ||
-        response.statusCode >= 300) {
-      throw ApiException(
-        'خطا در درخواست API',
-        code: response.statusCode.toString(),
-      );
-    }
-
-    final dynamic decoded;
-
-    try {
-      decoded = jsonDecode(response.body);
-    } catch (e) {
-      throw ParseException(
-        'پاسخ سرور قابل پردازش نیست',
-        code: 'INVALID_JSON',
-      );
-    }
-
-    if (decoded is! Map<String, dynamic>) {
-      throw ParseException(
-        'فرمت پاسخ API نامعتبر است',
-        code: 'INVALID_RESPONSE',
-      );
-    }
-
-    final apiResponse = ApiResponse<T>.fromJson(
-      decoded,
+    return _handleResponse<T>(
+      response,
       fromData: fromData,
     );
-
-    if (!apiResponse.success) {
-      throw ApiException(
-        apiResponse.message ?? 'درخواست API ناموفق بود',
-        code: 'API_ERROR',
-      );
-    }
-
-    return apiResponse;
   }
 
   /// ارسال درخواست PUT به Backend.
@@ -193,11 +183,10 @@ class ApiClient {
     try {
       response = await _client.put(
         uri,
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          ...?headers,
-        },
+        headers: await _buildHeaders(
+          headers: headers,
+          contentTypeJson: true,
+        ),
         body: body == null ? null : jsonEncode(body),
       );
     } catch (e) {
@@ -207,52 +196,10 @@ class ApiClient {
       );
     }
 
-    if (response.statusCode >= 500) {
-      throw ServerException(
-        'خطا در سرور',
-        code: response.statusCode.toString(),
-      );
-    }
-
-    if (response.statusCode < 200 ||
-        response.statusCode >= 300) {
-      throw ApiException(
-        'خطا در درخواست API',
-        code: response.statusCode.toString(),
-      );
-    }
-
-    final dynamic decoded;
-
-    try {
-      decoded = jsonDecode(response.body);
-    } catch (e) {
-      throw ParseException(
-        'پاسخ سرور قابل پردازش نیست',
-        code: 'INVALID_JSON',
-      );
-    }
-
-    if (decoded is! Map<String, dynamic>) {
-      throw ParseException(
-        'فرمت پاسخ API نامعتبر است',
-        code: 'INVALID_RESPONSE',
-      );
-    }
-
-    final apiResponse = ApiResponse<T>.fromJson(
-      decoded,
+    return _handleResponse<T>(
+      response,
       fromData: fromData,
     );
-
-    if (!apiResponse.success) {
-      throw ApiException(
-        apiResponse.message ?? 'درخواست API ناموفق بود',
-        code: 'API_ERROR',
-      );
-    }
-
-    return apiResponse;
   }
 
   /// ارسال درخواست DELETE به Backend.
@@ -270,10 +217,9 @@ class ApiClient {
     try {
       response = await _client.delete(
         uri,
-        headers: {
-          'Accept': 'application/json',
-          ...?headers,
-        },
+        headers: await _buildHeaders(
+          headers: headers,
+        ),
       );
     } catch (e) {
       throw NetworkException(
@@ -282,51 +228,9 @@ class ApiClient {
       );
     }
 
-    if (response.statusCode >= 500) {
-      throw ServerException(
-        'خطا در سرور',
-        code: response.statusCode.toString(),
-      );
-    }
-
-    if (response.statusCode < 200 ||
-        response.statusCode >= 300) {
-      throw ApiException(
-        'خطا در درخواست API',
-        code: response.statusCode.toString(),
-      );
-    }
-
-    final dynamic decoded;
-
-    try {
-      decoded = jsonDecode(response.body);
-    } catch (e) {
-      throw ParseException(
-        'پاسخ سرور قابل پردازش نیست',
-        code: 'INVALID_JSON',
-      );
-    }
-
-    if (decoded is! Map<String, dynamic>) {
-      throw ParseException(
-        'فرمت پاسخ API نامعتبر است',
-        code: 'INVALID_RESPONSE',
-      );
-    }
-
-    final apiResponse = ApiResponse<T>.fromJson(
-      decoded,
+    return _handleResponse<T>(
+      response,
       fromData: fromData,
     );
-
-    if (!apiResponse.success) {
-      throw ApiException(
-        apiResponse.message ?? 'درخواست API ناموفق بود',
-        code: 'API_ERROR',
-      );
-    }
-
-    return apiResponse;
   }
 }

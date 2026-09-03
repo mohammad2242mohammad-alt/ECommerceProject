@@ -1,12 +1,17 @@
 import '../../core/constants/api_constants.dart';
 import '../../core/network/api_client.dart';
+import '../../core/storage/token_storage.dart';
 import '../models/user_model.dart';
 
 class AuthService {
-  AuthService({ApiClient? apiClient})
-      : _apiClient = apiClient ?? ApiClient();
+  AuthService({
+    ApiClient? apiClient,
+    TokenStorage? tokenStorage,
+  })  : _apiClient = apiClient ?? ApiClient(),
+        _tokenStorage = tokenStorage ?? TokenStorage();
 
   final ApiClient _apiClient;
+  final TokenStorage _tokenStorage;
 
   Future<Map<String, dynamic>> register({
     required String phone,
@@ -20,7 +25,15 @@ class AuthService {
       },
     );
 
-    return response.data ?? {};
+    final data = response.data ?? {};
+
+    final token = data['token'] as String?;
+
+    if (token != null && token.isNotEmpty) {
+      await _tokenStorage.saveToken(token);
+    }
+
+    return data;
   }
 
   Future<Map<String, dynamic>> login({
@@ -35,7 +48,15 @@ class AuthService {
       },
     );
 
-    return response.data ?? {};
+    final data = response.data ?? {};
+
+    final token = data['token'] as String?;
+
+    if (token != null && token.isNotEmpty) {
+      await _tokenStorage.saveToken(token);
+    }
+
+    return data;
   }
 
   Future<UserModel> me() async {
@@ -50,8 +71,12 @@ class AuthService {
   }
 
   Future<void> logout() async {
-    await _apiClient.post<Map<String, dynamic>>(
-      ApiConstants.logout,
-    );
+    try {
+      await _apiClient.post<Map<String, dynamic>>(
+        ApiConstants.logout,
+      );
+    } finally {
+      await _tokenStorage.removeToken();
+    }
   }
 }
