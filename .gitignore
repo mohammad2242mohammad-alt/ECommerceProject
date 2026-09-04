@@ -1,0 +1,10 @@
+backend/vendor/
+backend/node_modules/
+backend/.env
+
+mobile/.dart_tool/
+mobile/build/
+mobile/.idea/
+
+.DS_Store
+Thumbs.db
