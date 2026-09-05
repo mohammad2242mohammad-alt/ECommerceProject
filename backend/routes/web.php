@@ -26,6 +26,18 @@ Route::get('/', function () {
 });
 
 
+/*
+|--------------------------------------------------------------------------
+| Flutter Web App
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/app/{any?}', function () {
+    return file_get_contents(public_path('app/index.html'));
+})->where('any', '.*');
+
+
+
 Route::prefix('admin')
     ->name('admin.')
     ->group(function () {
@@ -68,6 +80,7 @@ Route::prefix('admin')
                 |--------------------------------------------------------------------------
                 */
 
+
                 Route::resource(
                     'categories',
                     AdminCategoryController::class
@@ -105,10 +118,7 @@ Route::prefix('admin')
                     '/categories/{category}/attributes/{attribute}',
                     [AdminCategoryAttributeController::class,'destroy']
                 )->name('categories.attributes.destroy');
-
-
-
-                /*
+                                /*
                 |--------------------------------------------------------------------------
                 | Products
                 |--------------------------------------------------------------------------
