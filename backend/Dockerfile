@@ -18,6 +18,9 @@ RUN composer install --no-dev --optimize-autoloader
 # ساخت دیتابیس SQLite
 RUN touch database/database.sqlite
 
+# ساخت لینک storage
+RUN php artisan storage:link
+
 # اجرای Migration و Seed
 RUN php artisan migrate --seed --force
 
