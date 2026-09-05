@@ -11,6 +11,9 @@ RUN apt-get update && apt-get install -y \
 
 COPY . .
 
+# ساخت فایل دیتابیس SQLite
+RUN touch database/database.sqlite
+
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 RUN composer install --no-dev --optimize-autoloader
