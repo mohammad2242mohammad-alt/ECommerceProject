@@ -11,12 +11,15 @@ RUN apt-get update && apt-get install -y \
 
 COPY . .
 
-# ساخت فایل دیتابیس SQLite
-RUN touch database/database.sqlite
-
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 RUN composer install --no-dev --optimize-autoloader
+
+# ساخت دیتابیس SQLite
+RUN touch database/database.sqlite
+
+# اجرای Migration و Seed
+RUN php artisan migrate --seed --force
 
 EXPOSE 10000
 
