@@ -47,8 +47,12 @@ class ProductDetailResource extends JsonResource
 
                 return [
                     'id' => $image->id,
-                    'url' => Storage::url($image->path),
-                    'is_primary' => $image->is_primary,
+
+                    'url' => str_starts_with($image->path, 'http')
+                        ? $image->path
+                        : Storage::url($image->path),
+
+                    'is_primary' => (bool) $image->is_primary,
                 ];
 
             }),
@@ -79,7 +83,8 @@ class ProductDetailResource extends JsonResource
                     'stock' => $variant->stock,
 
                     'status' => $variant->status,
-                    'is_active' => $variant->is_active,
+
+                    'is_active' => (bool) $variant->is_active,
 
 
                     'values' => $variant->values->map(function ($value) {
@@ -97,6 +102,7 @@ class ProductDetailResource extends JsonResource
 
         ];
     }
+
 
     private function money(mixed $value): int|float|null
     {
