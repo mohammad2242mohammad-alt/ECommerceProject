@@ -51,7 +51,7 @@ class StoreContractTest extends TestCase
         $this->withToken($token)
             ->getJson('/api/auth/me')
             ->assertOk()
-            ->assertJsonPath('data.id', $user->id);
+            ->assertJsonPath('data.user.id', $user->id);
 
         $this->withToken($token)
             ->postJson('/api/auth/logout')
