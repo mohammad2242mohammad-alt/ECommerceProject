@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Address;
 use App\Models\Category;
-use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -167,7 +166,7 @@ class StoreContractTest extends TestCase
         $orderId = $orderResponse->json('data.id');
 
         $this->actingAs($user, 'sanctum')
-            ->postJson("/api/orders/{$orderId}/payment", ['simulate' => 'success'])
+            ->postJson("/api/payments/{$orderId}/start", ['simulate' => 'success'])
             ->assertOk()
             ->assertJsonPath('data.payment.status', 'paid');
 
@@ -211,7 +210,7 @@ class StoreContractTest extends TestCase
             ->assertNotFound();
     }
 
-    public function test_non_admin_cannot_open_admin_dashboard(): void
+    public function test_non_admin_cannot_access_admin_api(): void
     {
         $user = User::factory()->create([
             'role' => 'customer',
@@ -219,7 +218,7 @@ class StoreContractTest extends TestCase
         ]);
 
         $this->actingAs($user, 'sanctum')
-            ->getJson('/api/admin/dashboard')
+            ->postJson('/api/categories/1/attributes', [])
             ->assertStatus(403);
     }
 
