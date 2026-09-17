@@ -163,6 +163,10 @@ Route::middleware('auth:sanctum')->group(function () {
         [AddressController::class, 'store']
     );
 
+    Route::post('/addresses/{id}/default',
+        [AddressController::class, 'setDefault']
+    );
+
     Route::get('/addresses/{id}',
         [AddressController::class, 'show']
     );

@@ -46,12 +46,7 @@ class OrderController extends Controller
         $order = Order::with([
             'items',
             'payment',
-        ])
-            ->where(
-                'user_id',
-                $request->user()->id
-            )
-            ->findOrFail($id);
+        ])->findOrFail($id);
 
         $this->authorize('view', $order);
 

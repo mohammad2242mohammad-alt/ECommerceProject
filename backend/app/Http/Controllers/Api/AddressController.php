@@ -79,8 +79,7 @@ class AddressController extends Controller
 
     public function show(Request $request, int $id)
     {
-        $address = Address::where('user_id', $request->user()->id)
-            ->findOrFail($id);
+        $address = Address::findOrFail($id);
 
         $this->authorize('view', $address);
 
@@ -93,8 +92,7 @@ class AddressController extends Controller
 
     public function update(Request $request, int $id)
     {
-        $address = Address::where('user_id', $request->user()->id)
-            ->findOrFail($id);
+        $address = Address::findOrFail($id);
 
         $this->authorize('update', $address);
 
@@ -138,6 +136,25 @@ class AddressController extends Controller
         });
     }
 
+    public function setDefault(Request $request, int $id)
+    {
+        $address = Address::findOrFail($id);
+
+        $this->authorize('update', $address);
+
+        return DB::transaction(function () use ($request, $address) {
+            Address::where('user_id', $request->user()->id)
+                ->update(['is_default' => false]);
+
+            $address->update(['is_default' => true]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Default address updated successfully',
+                'data' => $address->fresh(),
+            ]);
+        });
+    }
     public function destroy(Request $request, int $id)
     {
         $address = Address::where('user_id', $request->user()->id)

@@ -87,8 +87,13 @@ class CartController extends Controller
             'quantity' => ['required', 'integer', 'min:1', 'max:100'],
         ]);
 
-        $cart = $this->ownedCart($request)->firstOrFail();
-        $item = $cart->items()->findOrFail($id);
+        $item = \App\Models\CartItem::with('cart')->findOrFail($id);
+
+        if ($item->cart->user_id !== $request->user()->id) {
+            abort(403);
+        }
+
+        $cart = $item->cart;
         $product = Product::query()
             ->whereKey($item->product_id)
             ->where('status', 'active')
