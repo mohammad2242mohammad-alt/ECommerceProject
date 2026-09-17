@@ -1,0 +1,8 @@
+{
+  "name": "ECommerce UI Library",
+  "version": "0.1.0",
+  "principle": "build once, rearrange many times",
+  "components": ["header","search","banner","category","product_card","product_grid","special_offer","brand","review","cart","address","shipping","checkout","order","footer","bottom_navigation","loading","empty_state","error_state"],
+  "pages": ["home","category","product_detail","search","cart","checkout","orders","profile"],
+  "layout_engine": "layouts/layout_engine.dart"
+}

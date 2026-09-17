@@ -1,0 +1,4 @@
+{
+  "page": "home",
+  "sections": ["header","banner","product_grid","category","special_offer","footer"]
+}

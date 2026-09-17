@@ -1,0 +1,4 @@
+{
+  "page": "home",
+  "sections": ["header","search","banner","category","special_offer","product_grid","brand","review","footer","bottom_navigation"]
+}
