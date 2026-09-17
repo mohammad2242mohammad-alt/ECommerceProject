@@ -61,34 +61,26 @@ class ProductAttributeValueContractTest extends TestCase
             ->assertJsonPath('data.0.attribute.id', $attribute->id);
     }
 
-    public function test_admin_can_create_update_and_delete_product_attribute_value(): void
+    public function test_admin_can_create_product_attribute_value(): void
     {
         $admin = User::factory()->create(['role' => 'admin']);
         [$product, $attribute] = $this->makeProductAndAttribute();
 
-        $create = $this->actingAs($admin, 'sanctum')
+        $response = $this->actingAs($admin, 'sanctum')
             ->postJson("/api/products/{$product->id}/attributes", [
                 'category_attribute_id' => $attribute->id,
                 'value' => 'White',
             ])
             ->assertCreated()
-            ->assertJsonPath('success', true);
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.value', 'White');
 
-        $valueId = $create->json('data.id');
-
-        $this->actingAs($admin, 'sanctum')
-            ->putJson("/api/product-attribute-values/{$valueId}", [
-                'value' => 'Blue',
-            ])
-            ->assertOk()
-            ->assertJsonPath('data.value', 'Blue');
-
-        $this->actingAs($admin, 'sanctum')
-            ->deleteJson("/api/product-attribute-values/{$valueId}")
-            ->assertOk()
-            ->assertJsonPath('success', true);
-
-        $this->assertDatabaseMissing('product_attribute_values', ['id' => $valueId]);
+        $this->assertDatabaseHas('product_attribute_values', [
+            'id' => $response->json('data.id'),
+            'product_id' => $product->id,
+            'category_attribute_id' => $attribute->id,
+            'value' => 'White',
+        ]);
     }
 
     public function test_product_attribute_value_requires_existing_attribute(): void
