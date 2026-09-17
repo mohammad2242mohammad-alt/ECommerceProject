@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\Cart;
+use App\Models\CartItem;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductVariant;
@@ -63,7 +65,7 @@ class ProductVariantContractTest extends TestCase
 
     public function test_admin_can_create_update_and_delete_a_variant(): void
     {
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->create(['role' => 'admin']);
         $product = $this->makeProduct();
 
         $create = $this->actingAs($admin, 'sanctum')
@@ -98,7 +100,7 @@ class ProductVariantContractTest extends TestCase
 
     public function test_variant_with_cart_reference_cannot_be_deleted(): void
     {
-        $admin = User::factory()->create(['is_admin' => true]);
+        $admin = User::factory()->create(['role' => 'admin']);
         $product = $this->makeProduct();
         $variant = ProductVariant::create([
             'product_id' => $product->id,
@@ -109,9 +111,12 @@ class ProductVariantContractTest extends TestCase
             'status' => 'active',
         ]);
 
-        \DB::table('cart_items')->insert([
-            'cart_id' => \DB::table('carts')->insertGetId(['user_id' => $admin->id]),
+        $cart = Cart::create(['user_id' => $admin->id]);
+
+        CartItem::create([
+            'cart_id' => $cart->id,
             'product_id' => $product->id,
+            'product_variant_id' => $variant->id,
             'variant_id' => $variant->id,
             'quantity' => 1,
             'price' => 1500,
