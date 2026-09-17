@@ -98,7 +98,7 @@ class VariantValueContractTest extends TestCase
             ->assertOk()
             ->assertJsonPath('success', true);
 
-        $this->assertDatabaseMissing('variant_values', ['id' => $valueId]);
+        $this->assertDatabaseMissing('product_variant_values', ['id' => $valueId]);
     }
 
     public function test_variant_value_requires_existing_attribute(): void
