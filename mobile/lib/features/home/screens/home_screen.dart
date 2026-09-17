@@ -5,6 +5,7 @@ import 'package:ecommerce_ui_library/ecommerce_ui_library.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../data/models/product_model.dart';
 import '../../../providers/store_providers.dart';
+import '../../../../ui_library/sections/home/home_sections.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -44,6 +45,14 @@ class HomeScreen extends ConsumerWidget {
           onAction: () => ref.invalidate(homeProvider),
         ),
         data: (data) {
+          final products = [
+            for (final product in data.products) _productItem(product),
+          ];
+          final specialOffers = products
+              .where((product) => product.discountPrice != null && product.discountPrice! < product.price)
+              .take(10)
+              .toList();
+
           final sections = <LayoutSection>[
             LayoutSection(
               id: 'header',
@@ -76,7 +85,7 @@ class HomeScreen extends ConsumerWidget {
             ),
             LayoutSection(
               id: 'banner',
-              builder: (_) => BannerComponent(
+              builder: (_) => HomeSections.banner(
                 items: [
                   for (final banner in data.banners)
                     BannerItem(
@@ -88,7 +97,7 @@ class HomeScreen extends ConsumerWidget {
             ),
             LayoutSection(
               id: 'category',
-              builder: (_) => CategoryComponent(
+              builder: (_) => HomeSections.categories(
                 items: [
                   for (final category in data.categories)
                     CategoryItem(
@@ -107,12 +116,21 @@ class HomeScreen extends ConsumerWidget {
                 ),
               ),
             ),
+            if (specialOffers.isNotEmpty)
+              LayoutSection(
+                id: 'special_offer',
+                builder: (_) => HomeSections.specialOffers(
+                  products: specialOffers,
+                  onProductTap: (item) => Navigator.pushNamed(
+                    context,
+                    AppRoutes.productDetail,
+                    arguments: int.tryParse(item.id) ?? 0,
+                  ),
+                ),
+              ),
             LayoutSection(
               id: 'product_grid',
               builder: (_) {
-                final products = [
-                  for (final product in data.products) _productItem(product),
-                ];
                 if (products.isEmpty) {
                   return const EmptyStateComponent(
                     title: 'محصولی برای نمایش وجود ندارد',
@@ -129,7 +147,7 @@ class HomeScreen extends ConsumerWidget {
                                 ? 3
                                 : 2;
 
-                    return ProductGridComponent(
+                    return HomeSections.products(
                       products: products,
                       title: 'جدیدترین محصولات',
                       columns: columns,
