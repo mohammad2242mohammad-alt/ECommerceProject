@@ -1,4 +1,16 @@
 {
   "page": "home",
-  "sections": ["header","search","banner","category","special_offer","product_grid","brand","review","footer","bottom_navigation"]
+  "version": 1,
+  "sections": [
+    "header",
+    "search",
+    "banner",
+    "category",
+    "special_offer",
+    "product_grid",
+    "brand",
+    "review",
+    "footer",
+    "bottom_navigation"
+  ]
 }
