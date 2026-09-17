@@ -34,6 +34,14 @@ class ProductImageContractTest extends TestCase
         ]);
     }
 
+    private function fakeImage(): UploadedFile
+    {
+        return UploadedFile::fake()->createWithContent(
+            'product.gif',
+            base64_decode('R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=')
+        );
+    }
+
     public function test_public_product_images_are_returned_in_sort_order(): void
     {
         Storage::fake('public');
@@ -58,7 +66,7 @@ class ProductImageContractTest extends TestCase
             ->assertOk()
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.0.alt_text', 'First')
-            ->assertJsonPath('data.0.is_primary', true)
+            ->assertJsonPath('data.0.is_primary', 1)
             ->assertJsonPath('data.1.alt_text', 'Second');
     }
 
@@ -70,19 +78,19 @@ class ProductImageContractTest extends TestCase
 
         $response = $this->actingAs($admin, 'sanctum')
             ->post("/api/products/{$product->id}/images", [
-                'image' => UploadedFile::fake()->image('product.jpg'),
+                'image' => $this->fakeImage(),
                 'alt_text' => 'Product image',
                 'sort_order' => 1,
             ])
             ->assertOk()
             ->assertJsonPath('success', true)
-            ->assertJsonPath('data.is_primary', true);
+            ->assertJsonPath('data.is_primary', 1);
 
         $imageId = $response->json('data.id');
         $image = ProductImage::findOrFail($imageId);
 
         Storage::disk('public')->assertExists($image->path);
-        $this->assertTrue($image->is_primary);
+        $this->assertTrue((bool) $image->is_primary);
     }
 
     public function test_admin_can_delete_primary_image_and_next_image_becomes_primary(): void
