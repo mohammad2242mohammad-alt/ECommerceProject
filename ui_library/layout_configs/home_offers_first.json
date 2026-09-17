@@ -1,0 +1,12 @@
+{
+  "page": "home",
+  "version": 1,
+  "sections": [
+    "header",
+    "search",
+    "special_offer",
+    "banner",
+    "category",
+    "product_grid"
+  ]
+}
