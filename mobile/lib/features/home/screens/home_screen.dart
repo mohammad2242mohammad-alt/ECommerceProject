@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/routes/app_routes.dart';
 import '../../../providers/store_providers.dart';
+import '../widgets/home_section_surface.dart';
 import '../widgets/home_ui_components.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -11,17 +12,24 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final home = ref.watch(homeProvider);
+    final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
+      backgroundColor: scheme.surfaceContainerLowest,
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(homeProvider),
         child: home.when(
-          loading: () => const ListView(
-            children: [
-              SizedBox(height: 320, child: Center(child: CircularProgressIndicator())),
+          loading: () => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: const [
+              SizedBox(
+                height: 320,
+                child: Center(child: CircularProgressIndicator()),
+              ),
             ],
           ),
           error: (error, _) => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
             children: [
               SizedBox(
                 height: 500,
@@ -35,7 +43,10 @@ class HomeScreen extends ConsumerWidget {
                         const SizedBox(height: 14),
                         const Text(
                           'بارگذاری فروشگاه انجام نشد',
-                          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 18,
+                          ),
                         ),
                         const SizedBox(height: 8),
                         Text(error.toString(), textAlign: TextAlign.center),
@@ -52,18 +63,30 @@ class HomeScreen extends ConsumerWidget {
             ],
           ),
           data: (data) {
-            final discounted = data.products.where((product) => product.hasDiscount).take(10).toList();
+            final discounted = data.products
+                .where((product) => product.hasDiscount)
+                .take(10)
+                .toList();
 
             return ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.only(bottom: 24),
+              padding: const EdgeInsets.fromLTRB(0, 0, 0, 24),
               children: [
                 StoreHeader(
-                  onFavorites: () => Navigator.pushNamed(context, AppRoutes.favorites),
+                  onFavorites: () =>
+                      Navigator.pushNamed(context, AppRoutes.favorites),
                   onCart: () => Navigator.pushNamed(context, AppRoutes.cart),
                 ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                Container(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                  decoration: BoxDecoration(
+                    color: scheme.surface,
+                    border: Border(
+                      bottom: BorderSide(
+                        color: scheme.outlineVariant.withValues(alpha: .5),
+                      ),
+                    ),
+                  ),
                   child: StoreSearchBar(
                     onSubmitted: (value) {
                       final query = value.trim();
@@ -80,45 +103,65 @@ class HomeScreen extends ConsumerWidget {
                 HomeHeroBanner(
                   items: data.banners,
                   onTap: (banner) {
-                    if (banner.linkType == 'product' && banner.linkValue != null) {
+                    if (banner.linkType == 'product' &&
+                        banner.linkValue != null) {
                       final id = int.tryParse(banner.linkValue!);
                       if (id != null) {
-                        Navigator.pushNamed(context, AppRoutes.productDetail, arguments: id);
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.productDetail,
+                          arguments: id,
+                        );
                       }
                     }
                   },
                 ),
-                SectionHeader(
-                  title: 'دسته‌بندی‌ها',
-                  onSeeAll: () => Navigator.pushNamed(context, AppRoutes.categories),
-                ),
-                CategoryStrip(
-                  items: data.categories,
-                  onTap: (category) => Navigator.pushNamed(
-                    context,
-                    AppRoutes.products,
-                    arguments: {
-                      'category_id': category.id,
-                      'title': category.name,
-                    },
+                HomeSectionSurface(
+                  child: Column(
+                    children: [
+                      SectionHeader(
+                        title: 'دسته‌بندی‌ها',
+                        onSeeAll: () => Navigator.pushNamed(
+                          context,
+                          AppRoutes.categories,
+                        ),
+                      ),
+                      CategoryStrip(
+                        items: data.categories,
+                        onTap: (category) => Navigator.pushNamed(
+                          context,
+                          AppRoutes.products,
+                          arguments: {
+                            'category_id': category.id,
+                            'title': category.name,
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                SpecialOffersSection(
-                  products: discounted,
-                  onProductTap: (product) => Navigator.pushNamed(
-                    context,
-                    AppRoutes.productDetail,
-                    arguments: product.id,
+                if (discounted.isNotEmpty)
+                  HomeSectionSurface(
+                    child: SpecialOffersSection(
+                      products: discounted,
+                      onProductTap: (product) => Navigator.pushNamed(
+                        context,
+                        AppRoutes.productDetail,
+                        arguments: product.id,
+                      ),
+                    ),
                   ),
-                ),
-                ProductGridSection(
-                  products: data.products,
-                  onProductTap: (product) => Navigator.pushNamed(
-                    context,
-                    AppRoutes.productDetail,
-                    arguments: product.id,
+                HomeSectionSurface(
+                  child: ProductGridSection(
+                    products: data.products,
+                    onProductTap: (product) => Navigator.pushNamed(
+                      context,
+                      AppRoutes.productDetail,
+                      arguments: product.id,
+                    ),
+                    onSeeAll: () =>
+                        Navigator.pushNamed(context, AppRoutes.products),
                   ),
-                  onSeeAll: () => Navigator.pushNamed(context, AppRoutes.products),
                 ),
                 const HomeFooter(),
               ],
@@ -145,11 +188,27 @@ class HomeScreen extends ConsumerWidget {
           }
         },
         destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'خانه'),
-          NavigationDestination(icon: Icon(Icons.grid_view_outlined), label: 'محصولات'),
-          NavigationDestination(icon: Icon(Icons.shopping_cart_outlined), label: 'سبد'),
-          NavigationDestination(icon: Icon(Icons.receipt_long_outlined), label: 'سفارش‌ها'),
-          NavigationDestination(icon: Icon(Icons.person_outline), label: 'حساب'),
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: 'خانه',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.grid_view_outlined),
+            label: 'محصولات',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.shopping_cart_outlined),
+            label: 'سبد',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.receipt_long_outlined),
+            label: 'سفارش‌ها',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            label: 'حساب',
+          ),
         ],
       ),
     );
