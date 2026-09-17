@@ -262,6 +262,10 @@ Route::middleware([
     'admin',
 ])->group(function () {
 
+    Route::get('/admin/banners',
+        [BannerController::class, 'index']
+    );
+
 
     Route::post('/categories/{categoryId}/attributes',
         [CategoryAttributeController::class, 'store']
