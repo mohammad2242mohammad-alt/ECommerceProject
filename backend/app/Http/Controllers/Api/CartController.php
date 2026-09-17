@@ -111,11 +111,7 @@ class CartController extends Controller
             'product_variant_id' => $variantId,
         ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Cart updated',
-            'data' => $item->fresh()->load('product', 'variant.values.attribute'),
-        ]);
+        return $this->cartResponse($cart, 'Cart updated');
     }
 
     public function destroy(Request $request, int $id): JsonResponse
