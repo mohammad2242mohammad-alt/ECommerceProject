@@ -12,3 +12,4 @@ export 'components/product_grid/product_grid.dart';
 export 'components/search/search.dart';
 export 'layouts/layout_engine.dart';
 export 'layouts/layout_registry.dart';
+export 'sections/home/home_sections.dart';
