@@ -5,7 +5,6 @@ import 'package:ecommerce_ui_library/ecommerce_ui_library.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../data/models/product_model.dart';
 import '../../../providers/store_providers.dart';
-import '../../../../ui_library/sections/home/home_sections.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
