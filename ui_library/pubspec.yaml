@@ -1,0 +1,15 @@
+name: ecommerce_ui_library
+description: Reusable UI components and layout system for ECommerceProject.
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: '>=3.12.2 <4.0.0'
+  flutter: '>=3.44.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
