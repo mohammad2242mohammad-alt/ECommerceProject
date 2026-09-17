@@ -114,13 +114,19 @@ class ReviewContractTest extends TestCase
 
     public function test_public_review_list_returns_only_approved_reviews(): void
     {
-        [$owner, $product] = $this->makeProductWithStock(5, 'REVIEW-005-' . uniqid());
-        $otherUser = User::factory()->create();
+        $user = User::factory()->create();
+        $address = $this->makeAddress($user);
+        $order = $this->makeOrder($user, $address);
+        $order->update(['order_status' => 'delivered']);
+
+        $productId = (int) \DB::table('order_items')
+            ->where('order_id', $order->id)
+            ->value('product_id');
 
         Review::create([
-            'user_id' => $owner->id,
-            'product_id' => $product->id,
-            'order_id' => null,
+            'user_id' => $user->id,
+            'product_id' => $productId,
+            'order_id' => $order->id,
             'rating' => 5,
             'title' => 'Approved',
             'body' => 'Visible review.',
@@ -128,16 +134,16 @@ class ReviewContractTest extends TestCase
         ]);
 
         Review::create([
-            'user_id' => $otherUser->id,
-            'product_id' => $product->id,
-            'order_id' => null,
+            'user_id' => $user->id,
+            'product_id' => $productId,
+            'order_id' => $order->id,
             'rating' => 1,
             'title' => 'Pending',
             'body' => 'Hidden review.',
             'status' => 'pending',
         ]);
 
-        $response = $this->getJson("/api/products/{$product->id}/reviews");
+        $response = $this->getJson("/api/products/{$productId}/reviews");
 
         $response
             ->assertOk()
