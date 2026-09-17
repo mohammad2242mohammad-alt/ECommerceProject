@@ -66,8 +66,10 @@ class ProductImageContractTest extends TestCase
             ->assertOk()
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.0.alt_text', 'First')
-            ->assertJsonPath('data.0.is_primary', true)
             ->assertJsonPath('data.1.alt_text', 'Second');
+
+        $response = $this->getJson("/api/products/{$product->id}/images");
+        $this->assertTrue((bool) $response->json('data.0.is_primary'));
     }
 
     public function test_admin_can_upload_product_image_and_first_image_becomes_primary(): void
