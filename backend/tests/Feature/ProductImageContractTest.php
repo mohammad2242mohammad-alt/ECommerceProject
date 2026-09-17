@@ -66,7 +66,7 @@ class ProductImageContractTest extends TestCase
             ->assertOk()
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.0.alt_text', 'First')
-            ->assertJsonPath('data.0.is_primary', 1)
+            ->assertJsonPath('data.0.is_primary', true)
             ->assertJsonPath('data.1.alt_text', 'Second');
     }
 
@@ -84,7 +84,7 @@ class ProductImageContractTest extends TestCase
             ])
             ->assertOk()
             ->assertJsonPath('success', true)
-            ->assertJsonPath('data.is_primary', 1);
+            ->assertJsonPath('data.is_primary', true);
 
         $imageId = $response->json('data.id');
         $image = ProductImage::findOrFail($imageId);
