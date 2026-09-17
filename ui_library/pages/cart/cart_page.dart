@@ -1,8 +1,25 @@
 import 'package:flutter/material.dart';
 
-class GenericSection extends StatelessWidget {
-  final String name;
-  const GenericSection({super.key, required this.name});
+import '../../layouts/layout_engine.dart';
+
+/// Configurable Cart page. Cart state and checkout rules stay outside.
+class CartPage extends StatelessWidget {
+  final List<LayoutSection> sections;
+  final EdgeInsetsGeometry padding;
+
+  const CartPage({
+    super.key,
+    required this.sections,
+    this.padding = EdgeInsets.zero,
+  });
+
   @override
-  Widget build(BuildContext context) => Padding(padding: const EdgeInsets.all(16), child: Text(name));
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: ConfigurableLayout(
+        sections: sections,
+        padding: padding,
+      ),
+    );
+  }
 }
