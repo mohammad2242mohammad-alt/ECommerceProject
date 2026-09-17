@@ -235,28 +235,59 @@ class StoreContractTest extends TestCase
         ]);
     }
 
-    public function test_customer_cannot_view_another_customers_order(): void
+    public function test_failed_payment_marks_payment_failed_and_order_stays_pending(): void
     {
-        [$owner, $product] = $this->makeProductWithStock(5, 'OWNER-001');
-        $otherUser = User::factory()->create();
-        $address = $this->makeAddress($owner);
+        [$user, $product] = $this->makeProductWithStock(5, 'PAYMENT-003');
+        $address = $this->makeAddress($user);
 
-        $this->actingAs($owner, 'sanctum')
+        $this->actingAs($user, 'sanctum')
             ->postJson('/api/cart/items', [
                 'product_id' => $product->id,
-                'quantity' => 1,
+                'quantity' => 2,
             ])
             ->assertOk();
 
-        $orderResponse = $this->actingAs($owner, 'sanctum')
-            ->postJson('/api/orders', ['address_id' => $address->id])
+        $orderResponse = $this->actingAs($user, 'sanctum')
+            ->postJson('/api/orders', [
+                'address_id' => $address->id,
+            ])
             ->assertCreated();
 
         $orderId = $orderResponse->json('data.id');
 
-        $this->actingAs($otherUser, 'sanctum')
-            ->getJson("/api/orders/{$orderId}")
-            ->assertNotFound();
+        $this->actingAs($user, 'sanctum')
+            ->postJson("/api/payments/{$orderId}/start", [
+                'simulate' => 'failure',
+            ])
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.payment.status', 'failed')
+            ->assertJsonPath('data.order.payment_status', 'failed')
+            ->assertJsonPath('data.order.order_status', 'pending');
+
+        $this->assertDatabaseHas('payments', [
+            'order_id' => $orderId,
+            'status' => 'failed',
+            'gateway' => 'mock',
+        ]);
+
+        $this->assertDatabaseHas('orders', [
+            'id' => $orderId,
+            'payment_status' => 'failed',
+            'order_status' => 'pending',
+        ]);
+    }
+
+    public function test_customer_cannot_view_another_customers_order(): void
+    {
+        $user = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $address = $this->makeAddress($otherUser);
+        $order = $this->makeOrder($otherUser, $address);
+
+        $this->actingAs($user, 'sanctum')
+            ->getJson("/api/orders/{$order->id}")
+            ->assertForbidden();
     }
 
     public function test_non_admin_cannot_access_admin_api(): void
@@ -337,17 +368,15 @@ class StoreContractTest extends TestCase
             ->assertOk()
             ->assertJsonPath('success', true);
 
-        $this->assertDatabaseMissing('cart_items', [
-            'id' => $item->id,
-        ]);
+        $this->assertDatabaseMissing('cart_items', ['id' => $item->id]);
     }
 
     public function test_customer_cannot_modify_another_customers_cart_item(): void
     {
-        [$owner, $product] = $this->makeProductWithStock(5, 'CART-OWNER-001');
-        $otherUser = User::factory()->create();
+        [$otherUser, $product] = $this->makeProductWithStock(5, 'CART-AUTH-001');
+        $user = User::factory()->create();
 
-        $this->actingAs($owner, 'sanctum')
+        $this->actingAs($otherUser, 'sanctum')
             ->postJson('/api/cart/items', [
                 'product_id' => $product->id,
                 'quantity' => 1,
@@ -356,52 +385,36 @@ class StoreContractTest extends TestCase
 
         $item = CartItem::query()->firstOrFail();
 
-        $this->actingAs($otherUser, 'sanctum')
+        $this->actingAs($user, 'sanctum')
             ->putJson("/api/cart/items/{$item->id}", [
                 'quantity' => 2,
             ])
-            ->assertNotFound();
-
-        $this->assertDatabaseHas('cart_items', [
-            'id' => $item->id,
-            'quantity' => 1,
-        ]);
+            ->assertForbidden();
     }
 
     public function test_customer_can_create_address_and_first_address_becomes_default(): void
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user, 'sanctum')
+        $this->actingAs($user, 'sanctum')
             ->postJson('/api/addresses', [
                 'title' => 'Home',
-                'receiver_name' => 'Test User',
-                'receiver_phone' => '09123334455',
+                'recipient_name' => 'Test User',
+                'recipient_phone' => '09120000000',
                 'province' => 'Yazd',
                 'city' => 'Yazd',
                 'address' => 'Test address',
                 'postal_code' => '1111111111',
             ])
-            ->assertCreated();
-
-        $response->assertJsonPath('data.is_default', true);
+            ->assertCreated()
+            ->assertJsonPath('data.is_default', true);
     }
 
     public function test_customer_can_change_default_address(): void
     {
         $user = User::factory()->create();
         $first = $this->makeAddress($user);
-        $second = Address::create([
-            'user_id' => $user->id,
-            'title' => 'Work',
-            'receiver_name' => 'Test User',
-            'receiver_phone' => '09123334455',
-            'province' => 'Yazd',
-            'city' => 'Yazd',
-            'address' => 'Work address',
-            'postal_code' => '2222222222',
-            'is_default' => false,
-        ]);
+        $second = $this->makeAddress($user, false, 'Second address');
 
         $this->actingAs($user, 'sanctum')
             ->putJson("/api/addresses/{$second->id}", [
@@ -409,122 +422,78 @@ class StoreContractTest extends TestCase
             ])
             ->assertOk();
 
-        $this->assertDatabaseHas('addresses', [
-            'id' => $first->id,
-            'is_default' => false,
-        ]);
-        $this->assertDatabaseHas('addresses', [
-            'id' => $second->id,
-            'is_default' => true,
-        ]);
+        $this->assertDatabaseHas('addresses', ['id' => $first->id, 'is_default' => false]);
+        $this->assertDatabaseHas('addresses', ['id' => $second->id, 'is_default' => true]);
     }
 
     public function test_customer_can_change_default_address_with_second_address(): void
     {
         $user = User::factory()->create();
         $first = $this->makeAddress($user);
-        $second = Address::create([
-            'user_id' => $user->id,
-            'title' => 'Work',
-            'receiver_name' => 'Test User',
-            'receiver_phone' => '09123334455',
-            'province' => 'Yazd',
-            'city' => 'Yazd',
-            'address' => 'Work address',
-            'postal_code' => '2222222222',
-            'is_default' => false,
-        ]);
+        $second = $this->makeAddress($user, false, 'Second address');
 
         $this->actingAs($user, 'sanctum')
-            ->putJson("/api/addresses/{$second->id}", [
-                'is_default' => true,
-            ])
+            ->postJson("/api/addresses/{$second->id}/default")
             ->assertOk();
 
-        $this->assertDatabaseHas('addresses', [
-            'id' => $first->id,
-            'is_default' => false,
-        ]);
-        $this->assertDatabaseHas('addresses', [
-            'id' => $second->id,
-            'is_default' => true,
-        ]);
+        $this->assertDatabaseHas('addresses', ['id' => $first->id, 'is_default' => false]);
+        $this->assertDatabaseHas('addresses', ['id' => $second->id, 'is_default' => true]);
     }
 
     public function test_deleting_default_address_selects_another_address(): void
     {
         $user = User::factory()->create();
         $first = $this->makeAddress($user);
-        $second = Address::create([
-            'user_id' => $user->id,
-            'title' => 'Work',
-            'receiver_name' => 'Test User',
-            'receiver_phone' => '09123334455',
-            'province' => 'Yazd',
-            'city' => 'Yazd',
-            'address' => 'Work address',
-            'postal_code' => '2222222222',
-            'is_default' => false,
-        ]);
+        $second = $this->makeAddress($user, false, 'Second address');
 
         $this->actingAs($user, 'sanctum')
             ->deleteJson("/api/addresses/{$first->id}")
             ->assertOk();
 
-        $this->assertDatabaseMissing('addresses', [
-            'id' => $first->id,
-        ]);
-
-        $this->assertDatabaseHas('addresses', [
-            'id' => $second->id,
-            'is_default' => true,
-        ]);
+        $this->assertDatabaseHas('addresses', ['id' => $second->id, 'is_default' => true]);
     }
 
     public function test_customer_cannot_view_another_customers_address(): void
     {
-        $owner = User::factory()->create();
+        $user = User::factory()->create();
         $otherUser = User::factory()->create();
+        $address = $this->makeAddress($otherUser);
 
-        $address = $this->makeAddress($owner);
-
-        $this->actingAs($otherUser, 'sanctum')
+        $this->actingAs($user, 'sanctum')
             ->getJson("/api/addresses/{$address->id}")
-            ->assertNotFound();
+            ->assertForbidden();
     }
 
     public function test_customer_cannot_update_another_customers_address(): void
     {
-        $owner = User::factory()->create();
+        $user = User::factory()->create();
         $otherUser = User::factory()->create();
+        $address = $this->makeAddress($otherUser);
 
-        $address = $this->makeAddress($owner);
-
-        $this->actingAs($otherUser, 'sanctum')
+        $this->actingAs($user, 'sanctum')
             ->putJson("/api/addresses/{$address->id}", [
-                'title' => 'Hacked',
+                'title' => 'Not mine',
             ])
-            ->assertNotFound();
+            ->assertForbidden();
+    }
 
-        $this->assertDatabaseHas('addresses', [
-            'id' => $address->id,
-            'title' => 'Home',
-        ]);
+    private function withToken(string $token): self
+    {
+        return $this->withHeader('Authorization', "Bearer {$token}");
     }
 
     private function makeProductWithStock(int $stock, string $sku): array
     {
+        $user = User::factory()->create();
         $category = Category::create([
-            'name' => "Category {$sku}",
-            'slug' => strtolower($sku) . '-category',
+            'name' => 'Test category',
+            'slug' => 'test-category-' . uniqid(),
             'is_active' => true,
         ]);
-
-        $user = User::factory()->create();
         $product = Product::create([
             'category_id' => $category->id,
-            'name' => "Product {$sku}",
-            'slug' => strtolower($sku) . '-product',
+            'name' => 'Test product',
+            'slug' => 'test-product-' . uniqid(),
             'sku' => $sku,
             'price' => 100,
             'stock' => $stock,
@@ -534,18 +503,37 @@ class StoreContractTest extends TestCase
         return [$user, $product];
     }
 
-    private function makeAddress(User $user): Address
+    private function makeAddress(User $user, bool $isDefault = true, string $addressText = 'Test address'): Address
     {
         return Address::create([
             'user_id' => $user->id,
             'title' => 'Home',
-            'receiver_name' => 'Test User',
-            'receiver_phone' => '09123334455',
+            'recipient_name' => 'Test User',
+            'recipient_phone' => '09120000000',
             'province' => 'Yazd',
             'city' => 'Yazd',
-            'address' => 'Test address',
+            'address' => $addressText,
             'postal_code' => '1111111111',
-            'is_default' => true,
+            'is_default' => $isDefault,
         ]);
+    }
+
+    private function makeOrder(User $user, Address $address)
+    {
+        [$orderUser, $product] = $this->makeProductWithStock(5, 'ORDER-AUTH-' . uniqid());
+        $orderUser->update(['id' => $user->id]);
+        $address->update(['user_id' => $user->id]);
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson('/api/cart/items', [
+                'product_id' => $product->id,
+                'quantity' => 1,
+            ])
+            ->assertOk();
+
+        return $this->actingAs($user, 'sanctum')
+            ->postJson('/api/orders', ['address_id' => $address->id])
+            ->assertCreated()
+            ->getOriginalContent();
     }
 }
