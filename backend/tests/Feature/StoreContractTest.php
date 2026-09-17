@@ -5,7 +5,9 @@ namespace Tests\Feature;
 use App\Models\CartItem;
 use App\Models\Address;
 use App\Models\Category;
+use App\Models\Coupon;
 use App\Models\Product;
+use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -477,6 +479,218 @@ class StoreContractTest extends TestCase
                 'title' => 'Not mine',
             ])
             ->assertForbidden();
+    }
+
+    public function test_checkout_calculates_normal_price_and_shipping(): void
+    {
+        [$user, $product] = $this->makeProductWithStock(5, 'CHECKOUT-001');
+        Setting::updateOrCreate(
+            ['key' => 'shipping_price'],
+            [
+                'value' => '20',
+                'type' => 'number',
+            ]
+        );
+        Setting::updateOrCreate(
+            ['key' => 'free_shipping_threshold'],
+            [
+                'value' => '1000',
+                'type' => 'number',
+            ]
+        );
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson('/api/cart/items', [
+                'product_id' => $product->id,
+                'quantity' => 2,
+            ])
+            ->assertOk();
+
+        $response = $this->actingAs($user, 'sanctum')
+            ->postJson('/api/checkout/calculate');
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.subtotal', 200)
+            ->assertJsonPath('data.discount', 0)
+            ->assertJsonPath('data.shipping', 20)
+            ->assertJsonPath('data.total', 220);
+    }
+
+    public function test_checkout_applies_free_shipping_at_threshold(): void
+    {
+        [$user, $product] = $this->makeProductWithStock(5, 'CHECKOUT-002');
+        Setting::updateOrCreate(
+            ['key' => 'shipping_price'],
+            [
+                'value' => '20',
+                'type' => 'number',
+            ]
+        );
+        Setting::updateOrCreate(
+            ['key' => 'free_shipping_threshold'],
+            [
+                'value' => '200',
+                'type' => 'number',
+            ]
+        );
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson('/api/cart/items', [
+                'product_id' => $product->id,
+                'quantity' => 2,
+            ])
+            ->assertOk();
+
+        $response = $this->actingAs($user, 'sanctum')
+            ->postJson('/api/checkout/calculate');
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('data.subtotal', 200)
+            ->assertJsonPath('data.discount', 0)
+            ->assertJsonPath('data.shipping', 0)
+            ->assertJsonPath('data.total', 200);
+    }
+
+    public function test_checkout_applies_percentage_coupon(): void
+    {
+        [$user, $product] = $this->makeProductWithStock(5, 'CHECKOUT-003');
+        Setting::updateOrCreate(
+            ['key' => 'shipping_price'],
+            [
+                'value' => '20',
+                'type' => 'number',
+            ]
+        );
+        Setting::updateOrCreate(
+            ['key' => 'free_shipping_threshold'],
+            [
+                'value' => '1000',
+                'type' => 'number',
+            ]
+        );
+
+        Coupon::create([
+            'code' => 'SAVE10',
+            'type' => 'percentage',
+            'value' => 10,
+            'minimum_order_amount' => 0,
+            'maximum_discount' => null,
+            'starts_at' => null,
+            'ends_at' => null,
+            'usage_limit' => null,
+            'per_user_limit' => null,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson('/api/cart/items', [
+                'product_id' => $product->id,
+                'quantity' => 2,
+            ])
+            ->assertOk();
+
+        $response = $this->actingAs($user, 'sanctum')
+            ->postJson('/api/checkout/calculate', [
+                'coupon_code' => 'save10',
+            ]);
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.subtotal', 200)
+            ->assertJsonPath('data.discount', 20)
+            ->assertJsonPath('data.shipping', 20)
+            ->assertJsonPath('data.total', 200)
+            ->assertJsonPath('data.coupon.code', 'SAVE10');
+    }
+
+    public function test_checkout_rejects_empty_cart(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson('/api/checkout/calculate')
+            ->assertStatus(400)
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('message', 'Cart is empty');
+    }
+
+    public function test_checkout_rejects_invalid_coupon(): void
+    {
+        [$user, $product] = $this->makeProductWithStock(5, 'CHECKOUT-004');
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson('/api/cart/items', [
+                'product_id' => $product->id,
+                'quantity' => 1,
+            ])
+            ->assertOk();
+
+        $response = $this->actingAs($user, 'sanctum')
+            ->postJson('/api/checkout/calculate', [
+                'coupon_code' => 'NOT-EXIST',
+            ]);
+
+        $response
+            ->assertStatus(422)
+            ->assertJsonPath('success', false)
+            ->assertJsonStructure([
+                'errors' => ['code'],
+            ]);
+    }
+
+    public function test_checkout_respects_coupon_maximum_discount(): void
+    {
+        [$user, $product] = $this->makeProductWithStock(10, 'CHECKOUT-005');
+        Setting::updateOrCreate(
+            ['key' => 'shipping_price'],
+            [
+                'value' => '20',
+                'type' => 'number',
+            ]
+        );
+        Setting::updateOrCreate(
+            ['key' => 'free_shipping_threshold'],
+            [
+                'value' => '1000',
+                'type' => 'number',
+            ]
+        );
+
+        Coupon::create([
+            'code' => 'CAP20',
+            'type' => 'percentage',
+            'value' => 50,
+            'minimum_order_amount' => 0,
+            'maximum_discount' => 20,
+            'starts_at' => null,
+            'ends_at' => null,
+            'usage_limit' => null,
+            'per_user_limit' => null,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson('/api/cart/items', [
+                'product_id' => $product->id,
+                'quantity' => 2,
+            ])
+            ->assertOk();
+
+        $response = $this->actingAs($user, 'sanctum')
+            ->postJson('/api/checkout/calculate', [
+                'coupon_code' => 'CAP20',
+            ]);
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('data.subtotal', 200)
+            ->assertJsonPath('data.discount', 20)
+            ->assertJsonPath('data.shipping', 20)
+            ->assertJsonPath('data.total', 200);
     }
 
     public function withToken(string $token, string $type = 'Bearer'): self
