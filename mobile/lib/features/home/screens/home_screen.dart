@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ecommerce_ui_library/ecommerce_ui_library.dart';
 
 import '../../../core/routes/app_routes.dart';
+import '../../../data/models/home_model.dart';
 import '../../../data/models/product_model.dart';
 import '../../../providers/store_providers.dart';
 
@@ -23,6 +24,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void initState() {
     super.initState();
     _layoutFuture = LayoutConfigLoader.load(widget.layoutConfig);
+  }
+
+  @override
+  void didUpdateWidget(covariant HomeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.layoutConfig != widget.layoutConfig) {
+      setState(() {
+        _layoutFuture = LayoutConfigLoader.load(widget.layoutConfig);
+      });
+    }
   }
 
   ProductCardItem _productItem(ProductModel product) {
@@ -53,7 +64,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     String id,
     List<ProductCardItem> products,
     List<ProductCardItem> specialOffers,
-    dynamic data,
+    HomeModel data,
   ) {
     switch (id) {
       case 'header':
