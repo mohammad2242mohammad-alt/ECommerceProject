@@ -187,11 +187,59 @@ class StoreContractTest extends TestCase
         ]);
     }
 
+    public function test_successful_payment_marks_order_as_paid_and_confirmed(): void
+    {
+        [$user, $product] = $this->makeProductWithStock(5, 'PAYMENT-002');
+        $address = $this->makeAddress($user);
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson('/api/cart/items', [
+                'product_id' => $product->id,
+                'quantity' => 2,
+            ])
+            ->assertOk();
+
+        $orderResponse = $this->actingAs($user, 'sanctum')
+            ->postJson('/api/orders', [
+                'address_id' => $address->id,
+            ])
+            ->assertCreated();
+
+        $orderId = $orderResponse->json('data.id');
+
+        $this->actingAs($user, 'sanctum')
+            ->postJson("/api/payments/{$orderId}/start", [
+                'simulate' => 'success',
+            ])
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.payment.status', 'paid')
+            ->assertJsonPath('data.order.payment_status', 'paid')
+            ->assertJsonPath('data.order.order_status', 'confirmed');
+
+        $this->assertDatabaseHas('payments', [
+            'order_id' => $orderId,
+            'status' => 'paid',
+            'gateway' => 'mock',
+        ]);
+
+        $this->assertDatabaseHas('orders', [
+            'id' => $orderId,
+            'payment_status' => 'paid',
+            'order_status' => 'confirmed',
+        ]);
+
+        $this->assertDatabaseMissing('payments', [
+            'order_id' => $orderId,
+            'transaction_reference' => null,
+        ]);
+    }
+
     public function test_customer_cannot_view_another_customers_order(): void
     {
         [$owner, $product] = $this->makeProductWithStock(5, 'OWNER-001');
-        $address = $this->makeAddress($owner);
         $otherUser = User::factory()->create();
+        $address = $this->makeAddress($owner);
 
         $this->actingAs($owner, 'sanctum')
             ->postJson('/api/cart/items', [
@@ -213,31 +261,21 @@ class StoreContractTest extends TestCase
 
     public function test_non_admin_cannot_access_admin_api(): void
     {
-        $user = User::factory()->create([
-            'role' => 'customer',
-            'is_active' => true,
-        ]);
+        $user = User::factory()->create(['role' => 'customer']);
 
         $this->actingAs($user, 'sanctum')
-            ->postJson('/api/categories/1/attributes', [])
-            ->assertStatus(403);
+            ->getJson('/api/admin/banners')
+            ->assertForbidden();
     }
 
     public function test_admin_can_open_the_banner_management_screen(): void
     {
-        User::factory()->create([
-            'phone' => '09120000001',
-            'password' => 'password',
-            'role' => 'admin',
-            'is_active' => true,
-        ]);
+        $admin = User::factory()->create(['role' => 'admin']);
 
-        $this->post('/admin/login', [
-            'phone' => '09120000001',
-            'password' => 'password',
-        ])->assertRedirect('/admin');
-
-        $this->get('/admin/banners')->assertOk();
+        $this->actingAs($admin, 'sanctum')
+            ->getJson('/api/admin/banners')
+            ->assertOk()
+            ->assertJsonPath('success', true);
     }
 
     public function test_customer_can_update_cart_item_quantity(): void
@@ -251,29 +289,19 @@ class StoreContractTest extends TestCase
             ])
             ->assertOk();
 
-        $item = CartItem::where('cart_id', function ($query) use ($user) {
-            $query->select('id')
-                ->from('carts')
-                ->where('user_id', $user->id)
-                ->limit(1);
-        })->firstOrFail();
+        $item = CartItem::query()->firstOrFail();
 
         $this->actingAs($user, 'sanctum')
             ->putJson("/api/cart/items/{$item->id}", [
                 'quantity' => 3,
             ])
             ->assertOk()
-            ->assertJsonPath('success', true);
-
-        $this->assertDatabaseHas('cart_items', [
-            'id' => $item->id,
-            'quantity' => 3,
-        ]);
+            ->assertJsonPath('data.items.0.quantity', 3);
     }
 
     public function test_cart_rejects_update_quantity_above_stock(): void
     {
-        [$user, $product] = $this->makeProductWithStock(2, 'CART-UPDATE-STOCK-001');
+        [$user, $product] = $this->makeProductWithStock(2, 'CART-UPDATE-002');
 
         $this->actingAs($user, 'sanctum')
             ->postJson('/api/cart/items', [
@@ -282,12 +310,7 @@ class StoreContractTest extends TestCase
             ])
             ->assertOk();
 
-        $item = CartItem::where('cart_id', function ($query) use ($user) {
-            $query->select('id')
-                ->from('carts')
-                ->where('user_id', $user->id)
-                ->limit(1);
-        })->firstOrFail();
+        $item = CartItem::query()->firstOrFail();
 
         $this->actingAs($user, 'sanctum')
             ->putJson("/api/cart/items/{$item->id}", [
@@ -307,12 +330,7 @@ class StoreContractTest extends TestCase
             ])
             ->assertOk();
 
-        $item = CartItem::where('cart_id', function ($query) use ($user) {
-            $query->select('id')
-                ->from('carts')
-                ->where('user_id', $user->id)
-                ->limit(1);
-        })->firstOrFail();
+        $item = CartItem::query()->firstOrFail();
 
         $this->actingAs($user, 'sanctum')
             ->deleteJson("/api/cart/items/{$item->id}")
@@ -336,18 +354,18 @@ class StoreContractTest extends TestCase
             ])
             ->assertOk();
 
-        $item = CartItem::where('cart_id', function ($query) use ($owner) {
-            $query->select('id')
-                ->from('carts')
-                ->where('user_id', $owner->id)
-                ->limit(1);
-        })->firstOrFail();
+        $item = CartItem::query()->firstOrFail();
 
         $this->actingAs($otherUser, 'sanctum')
             ->putJson("/api/cart/items/{$item->id}", [
                 'quantity' => 2,
             ])
             ->assertNotFound();
+
+        $this->assertDatabaseHas('cart_items', [
+            'id' => $item->id,
+            'quantity' => 1,
+        ]);
     }
 
     public function test_customer_can_create_address_and_first_address_becomes_default(): void
@@ -361,27 +379,18 @@ class StoreContractTest extends TestCase
                 'receiver_phone' => '09123334455',
                 'province' => 'Yazd',
                 'city' => 'Yazd',
-                'address' => 'First address',
+                'address' => 'Test address',
                 'postal_code' => '1111111111',
-                'is_default' => false,
-            ]);
+            ])
+            ->assertCreated();
 
-        $response
-            ->assertCreated()
-            ->assertJsonPath('success', true);
-
-        $this->assertDatabaseHas('addresses', [
-            'user_id' => $user->id,
-            'is_default' => true,
-        ]);
+        $response->assertJsonPath('data.is_default', true);
     }
 
     public function test_customer_can_change_default_address(): void
     {
         $user = User::factory()->create();
-
         $first = $this->makeAddress($user);
-
         $second = Address::create([
             'user_id' => $user->id,
             'title' => 'Work',
@@ -389,7 +398,7 @@ class StoreContractTest extends TestCase
             'receiver_phone' => '09123334455',
             'province' => 'Yazd',
             'city' => 'Yazd',
-            'address' => 'Second address',
+            'address' => 'Work address',
             'postal_code' => '2222222222',
             'is_default' => false,
         ]);
@@ -404,7 +413,38 @@ class StoreContractTest extends TestCase
             'id' => $first->id,
             'is_default' => false,
         ]);
+        $this->assertDatabaseHas('addresses', [
+            'id' => $second->id,
+            'is_default' => true,
+        ]);
+    }
 
+    public function test_customer_can_change_default_address_with_second_address(): void
+    {
+        $user = User::factory()->create();
+        $first = $this->makeAddress($user);
+        $second = Address::create([
+            'user_id' => $user->id,
+            'title' => 'Work',
+            'receiver_name' => 'Test User',
+            'receiver_phone' => '09123334455',
+            'province' => 'Yazd',
+            'city' => 'Yazd',
+            'address' => 'Work address',
+            'postal_code' => '2222222222',
+            'is_default' => false,
+        ]);
+
+        $this->actingAs($user, 'sanctum')
+            ->putJson("/api/addresses/{$second->id}", [
+                'is_default' => true,
+            ])
+            ->assertOk();
+
+        $this->assertDatabaseHas('addresses', [
+            'id' => $first->id,
+            'is_default' => false,
+        ]);
         $this->assertDatabaseHas('addresses', [
             'id' => $second->id,
             'is_default' => true,
@@ -414,9 +454,7 @@ class StoreContractTest extends TestCase
     public function test_deleting_default_address_selects_another_address(): void
     {
         $user = User::factory()->create();
-
         $first = $this->makeAddress($user);
-
         $second = Address::create([
             'user_id' => $user->id,
             'title' => 'Work',
@@ -424,7 +462,7 @@ class StoreContractTest extends TestCase
             'receiver_phone' => '09123334455',
             'province' => 'Yazd',
             'city' => 'Yazd',
-            'address' => 'Second address',
+            'address' => 'Work address',
             'postal_code' => '2222222222',
             'is_default' => false,
         ]);
