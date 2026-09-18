@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../data/models/product_detail_model.dart';
-import '../../../shared/widgets/store_widgets.dart';
+import '../../../shared/widgets/shared_widgets.dart';
 
 class ProductDetailGallery extends StatelessWidget {
   const ProductDetailGallery({super.key, required this.images});
