@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/routes/app_routes.dart';
 import '../../../providers/store_providers.dart';
 import '../widgets/favorites_ui_components.dart';
 
