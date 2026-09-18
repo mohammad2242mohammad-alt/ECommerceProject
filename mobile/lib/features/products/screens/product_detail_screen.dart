@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../data/models/product_detail_model.dart';
 import '../../../providers/store_providers.dart';
-import '../../../shared/widgets/store_widgets.dart';
+import '../widgets/product_detail_ui_components.dart';
 
 class ProductDetailScreen extends ConsumerStatefulWidget {
   const ProductDetailScreen({super.key, required this.productId});
@@ -134,145 +134,46 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
         data: (product) => ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 110),
           children: [
-            _Gallery(images: product.images),
+            ProductDetailGallery(images: product.images),
 
             const SizedBox(height: 18),
 
-            Text(
-              product.name,
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineSmall
-                  ?.copyWith(fontWeight: FontWeight.w900),
+            ProductDetailHeader(
+              name: product.name,
+              shortDescription: product.shortDescription,
             ),
 
-            if (product.shortDescription?.isNotEmpty == true)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  product.shortDescription!,
-                  style: const TextStyle(
-                    color: Colors.black54,
-                    height: 1.6,
-                  ),
-                ),
-              ),
-
             const SizedBox(height: 12),
-                        Row(
-              children: [
-                const Icon(Icons.star, size: 19, color: Colors.amber),
-                Text(
-                  ' ${(product.ratingAverage ?? 0).toStringAsFixed(1)} '
-                  '(${product.ratingCount ?? 0} نظر)',
-                ),
-                const Spacer(),
-                Text(
-                  product.stock > 0 ? 'موجود در انبار' : 'ناموجود',
-                  style: TextStyle(
-                    color: product.stock > 0 ? Colors.green : Colors.red,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+
+            ProductDetailRatingStock(
+              ratingAverage: product.ratingAverage,
+              ratingCount: product.ratingCount,
+              stock: product.stock,
             ),
 
             const Divider(height: 32),
 
             if (product.variants.isNotEmpty) ...[
-              const Text(
-                'انتخاب تنوع',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 17,
-                ),
-              ),
-
-              const SizedBox(height: 10),
-
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: product.variants.map((variant) {
-                  return ChoiceChip(
-                    selected: _variantId == variant.id,
-                    onSelected: variant.stock > 0
-                        ? (_) => setState(() => _variantId = variant.id)
-                        : null,
-                    label: Text(_variantLabel(variant)),
-                  );
-                }).toList(),
+              ProductVariantSelector(
+                variants: product.variants,
+                selectedVariantId: _variantId,
+                onChanged: (id) => setState(() => _variantId = id),
               ),
 
               const Divider(height: 32),
             ],
 
             if (product.specifications.isNotEmpty) ...[
-              const Text(
-                'مشخصات',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 17,
-                ),
+              ProductSpecificationsSection(
+                specifications: product.specifications,
               ),
-
-              const SizedBox(height: 8),
-
-              ...product.specifications.map((spec) {
-                final index = product.specifications.indexOf(spec);
-
-                return Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 11,
-                  ),
-                  color: index.isEven
-                      ? Colors.grey.shade100
-                      : Colors.white,
-
-                  child: Row(
-                    children: [
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          spec.name,
-                          style: const TextStyle(
-                            color: Colors.black54,
-                          ),
-                        ),
-                      ),
-
-                      Expanded(
-                        flex: 3,
-                        child: Text(
-                          spec.value,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }),
 
               const Divider(height: 32),
             ],
 
             if (product.description?.isNotEmpty == true) ...[
-              const Text(
-                'معرفی محصول',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 17,
-                ),
-              ),
-
-              const SizedBox(height: 8),
-
-              Text(
-                product.description!,
-                style: const TextStyle(height: 1.8),
+              ProductDescriptionSection(
+                description: product.description,
               ),
 
               const Divider(height: 32),
@@ -285,86 +186,18 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
 
       bottomSheet: detailValue == null
           ? null
-          : SafeArea(
-              child: Container(
-                padding: const EdgeInsets.fromLTRB(
-                  16,
-                  10,
-                  16,
-                  12,
-                ),
-
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(.08),
-                      blurRadius: 12,
-                    ),
-                  ],
-                ),
-
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment:
-                            CrossAxisAlignment.start,
-
-                        children: [
-                          if (detailValue.hasDiscount)
-                            Text(
-                              '${money(detailValue.price)} تومان',
-                              style: const TextStyle(
-                                decoration:
-                                    TextDecoration.lineThrough,
-                                color: Colors.grey,
-                              ),
-                            ),
-
-                          Text(
-                            '${money(_selectedPrice(detailValue))} تومان',
-                            style: TextStyle(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .primary,
-                              fontWeight: FontWeight.w900,
-                              fontSize: 17,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(width: 12),
-
-                    Expanded(
-                      child: FilledButton(
-                        onPressed:
-                            detailValue.stock <= 0 || _busy
-                                ? null
-                                : _addToCart,
-
-                        child: _busy
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child:
-                                    CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Text(
-                                'افزودن به سبد',
-                              ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+          : ProductDetailBottomBar(
+              product: detailValue,
+              selectedPrice: _selectedPrice(detailValue),
+              busy: _busy,
+              onAddToCart: detailValue.stock <= 0 || _busy
+                  ? null
+                  : _addToCart,
             ),
     );
+  }
+
+  num _selectedPrice    );
   }
 
   num _selectedPrice(ProductDetailModel product) {
@@ -378,53 +211,6 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
         ? product.currentPrice
         : variant.currentPrice;
   }
-
-  String _variantLabel(ProductVariantModel variant) {
-    final values = variant.values
-        .map((value) => '${value.name}: ${value.value}')
-        .join('، ');
-
-    return values.isEmpty
-        ? (variant.sku ?? 'تنوع ${variant.id}')
-        : values;
-  }
-}
-class _Gallery extends StatelessWidget {
-  const _Gallery({required this.images});
-
-  final List<ProductImageModel> images;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 300,
-
-      child: images.isEmpty
-          ? const NetworkImageBox(
-              height: 300,
-              width: double.infinity,
-              fit: BoxFit.contain,
-            )
-
-          : PageView.builder(
-              itemCount: images.length,
-
-              itemBuilder: (_, index) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-
-                  child: NetworkImageBox(
-                    url: images[index].url,
-                    height: 300,
-                    width: double.infinity,
-                    fit: BoxFit.contain,
-                  ),
-                );
-              },
-            ),
-    );
-  }
-}
 
 
 class _Reviews extends ConsumerWidget {

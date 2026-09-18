@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/routes/app_routes.dart';
 import '../../../providers/store_providers.dart';
-import '../../../shared/widgets/store_widgets.dart';
-import '../../products/widgets/product_card.dart';
+import '../widgets/home_section_surface.dart';
+import '../widgets/home_ui_components.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -12,41 +12,179 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final home = ref.watch(homeProvider);
+    final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('فروشگاه اینترنتی'),
-        actions: [
-          IconButton(
-            onPressed: () =>
-                Navigator.pushNamed(context, AppRoutes.favorites),
-            icon: const Icon(Icons.favorite_border),
+      backgroundColor: scheme.surfaceContainerLowest,
+      body: RefreshIndicator(
+        onRefresh: () async => ref.invalidate(homeProvider),
+        child: home.when(
+          loading: () => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: const [
+              SizedBox(
+                height: 320,
+                child: Center(child: CircularProgressIndicator()),
+              ),
+            ],
           ),
-          IconButton(
-            onPressed: () =>
-                Navigator.pushNamed(context, AppRoutes.cart),
-            icon: const Icon(Icons.shopping_cart_outlined),
+          error: (error, _) => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [
+              SizedBox(
+                height: 500,
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.cloud_off_outlined, size: 48),
+                        const SizedBox(height: 14),
+                        const Text(
+                          'بارگذاری فروشگاه انجام نشد',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 18,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(error.toString(), textAlign: TextAlign.center),
+                        const SizedBox(height: 16),
+                        FilledButton(
+                          onPressed: () => ref.invalidate(homeProvider),
+                          child: const Text('تلاش مجدد'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+          data: (data) {
+            final discounted = data.products
+                .where((product) => product.hasDiscount)
+                .take(10)
+                .toList();
 
+            return ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(0, 0, 0, 24),
+              children: [
+                StoreHeader(
+                  onFavorites: () =>
+                      Navigator.pushNamed(context, AppRoutes.favorites),
+                  onCart: () => Navigator.pushNamed(context, AppRoutes.cart),
+                ),
+                Container(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                  decoration: BoxDecoration(
+                    color: scheme.surface,
+                    border: Border(
+                      bottom: BorderSide(
+                        color: scheme.outlineVariant.withValues(alpha: .5),
+                      ),
+                    ),
+                  ),
+                  child: StoreSearchBar(
+                    onSubmitted: (value) {
+                      final query = value.trim();
+                      if (query.isEmpty) return;
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.products,
+                        arguments: {'search': query},
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 8),
+                HomeHeroBanner(
+                  items: data.banners,
+                  onTap: (banner) {
+                    if (banner.linkType == 'product' &&
+                        banner.linkValue != null) {
+                      final id = int.tryParse(banner.linkValue!);
+                      if (id != null) {
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.productDetail,
+                          arguments: id,
+                        );
+                      }
+                    }
+                  },
+                ),
+                HomeSectionSurface(
+                  child: Column(
+                    children: [
+                      SectionHeader(
+                        title: 'دسته‌بندی‌ها',
+                        onSeeAll: () => Navigator.pushNamed(
+                          context,
+                          AppRoutes.categories,
+                        ),
+                      ),
+                      CategoryStrip(
+                        items: data.categories,
+                        onTap: (category) => Navigator.pushNamed(
+                          context,
+                          AppRoutes.products,
+                          arguments: {
+                            'category_id': category.id,
+                            'title': category.name,
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (discounted.isNotEmpty)
+                  HomeSectionSurface(
+                    child: SpecialOffersSection(
+                      products: discounted,
+                      onProductTap: (product) => Navigator.pushNamed(
+                        context,
+                        AppRoutes.productDetail,
+                        arguments: product.id,
+                      ),
+                    ),
+                  ),
+                HomeSectionSurface(
+                  child: ProductGridSection(
+                    products: data.products,
+                    onProductTap: (product) => Navigator.pushNamed(
+                      context,
+                      AppRoutes.productDetail,
+                      arguments: product.id,
+                    ),
+                    onSeeAll: () =>
+                        Navigator.pushNamed(context, AppRoutes.products),
+                  ),
+                ),
+                const HomeFooter(),
+              ],
+            );
+          },
+        ),
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: 0,
         onDestinationSelected: (index) {
-          if (index == 1) {
-            Navigator.pushNamed(context, AppRoutes.products);
-          }
-
-          if (index == 2) {
-            Navigator.pushNamed(context, AppRoutes.cart);
-          }
-
-          if (index == 3) {
-            Navigator.pushNamed(context, AppRoutes.orders);
-          }
-
-          if (index == 4) {
-            Navigator.pushNamed(context, AppRoutes.profile);
+          switch (index) {
+            case 1:
+              Navigator.pushNamed(context, AppRoutes.products);
+              break;
+            case 2:
+              Navigator.pushNamed(context, AppRoutes.cart);
+              break;
+            case 3:
+              Navigator.pushNamed(context, AppRoutes.orders);
+              break;
+            case 4:
+              Navigator.pushNamed(context, AppRoutes.profile);
+              break;
           }
         },
         destinations: const [
@@ -72,441 +210,6 @@ class HomeScreen extends ConsumerWidget {
             label: 'حساب',
           ),
         ],
-      ),
-
-      body: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(homeProvider);
-        },
-
-        child: home.when(
-
-          loading: () =>
-              const Center(child: CircularProgressIndicator()),
-
-
-          error: (error, _) {
-            return ListView(
-              children: [
-                SizedBox(
-                  height: 500,
-                  child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-
-                        Text(
-                          error.toString(),
-                          textAlign: TextAlign.center,
-                        ),
-
-                        const SizedBox(
-                          height: 12,
-                        ),
-
-                        FilledButton(
-                          onPressed: () {
-                            ref.invalidate(homeProvider);
-                          },
-                          child: const Text(
-                            'تلاش مجدد',
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            );
-          },
-
-
-          data: (data) {
-
-            return ListView(
-              padding:
-                  const EdgeInsets.fromLTRB(
-                    16,
-                    8,
-                    16,
-                    30,
-                  ),
-
-              children: [
-
-                TextField(
-                  textInputAction:
-                      TextInputAction.search,
-
-                  onSubmitted: (value) {
-                    Navigator.pushNamed(
-                      context,
-                      AppRoutes.products,
-                      arguments: {
-                        'search': value,
-                      },
-                    );
-                  },
-
-                  decoration:
-                      const InputDecoration(
-                    hintText:
-                        'جستجو در محصولات',
-
-                    prefixIcon:
-                        Icon(Icons.search),
-                  ),
-                ),
-
-
-                const SizedBox(height: 18),
-
-
-
-                if (data.banners.isNotEmpty)
-
-                  SizedBox(
-                    height: 165,
-
-                    child: PageView.builder(
-
-                      itemCount:
-                          data.banners.length,
-
-                      itemBuilder:
-                          (context, index) {
-
-                        final banner =
-                            data.banners[index];
-
-
-                        return Card(
-                          clipBehavior:
-                              Clip.antiAlias,
-
-                          child: Stack(
-
-                            fit:
-                                StackFit.expand,
-
-                            children: [
-
-                              NetworkImageBox(
-                                url:
-                                    banner.image,
-
-                                radius:
-                                    0,
-                              ),
-
-
-                              Container(
-
-                                decoration:
-                                    const BoxDecoration(
-
-                                  gradient:
-                                      LinearGradient(
-
-                                    colors: [
-                                      Colors.transparent,
-                                      Colors.black54,
-                                    ],
-
-                                    begin:
-                                        Alignment.topCenter,
-
-                                    end:
-                                        Alignment.bottomCenter,
-                                  ),
-                                ),
-                              ),
-
-
-                              Positioned(
-                                right:
-                                    18,
-
-                                bottom:
-                                    16,
-
-                                child:
-                                    Text(
-
-                                  banner.title,
-
-                                  style:
-                                      const TextStyle(
-
-                                    color:
-                                        Colors.white,
-
-                                    fontSize:
-                                        20,
-
-                                    fontWeight:
-                                        FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-
-
-
-                const SizedBox(height: 22),
-
-
-                SectionTitle(
-                  title:
-                      'دسته‌بندی‌ها',
-
-                  onSeeAll: () {
-                    Navigator.pushNamed(
-                      context,
-                      AppRoutes.categories,
-                    );
-                  },
-                ),
-
-
-                const SizedBox(height: 10),
-
-
-
-                if (data.categories.isEmpty)
-
-                  const EmptyState(
-                    message:
-                        'دسته‌بندی‌ای ثبت نشده',
-                  )
-
-                else
-
-                  SizedBox(
-
-                    height:
-                        115,
-
-                    child:
-                        ListView.separated(
-
-                      scrollDirection:
-                          Axis.horizontal,
-
-                      itemCount:
-                          data.categories.length,
-
-                      separatorBuilder:
-                          (_, index) =>
-                              const SizedBox(
-                                width: 10,
-                              ),
-
-
-                      itemBuilder:
-                          (context, index) {
-
-                        final category =
-                            data.categories[index];
-
-
-                        return InkWell(
-
-                          onTap: () {
-
-                            Navigator.pushNamed(
-
-                              context,
-
-                              AppRoutes.products,
-
-                              arguments: {
-
-                                'category_id':
-                                    category.id,
-
-                                'title':
-                                    category.name,
-                              },
-                            );
-                          },
-
-
-                          child: SizedBox(
-
-                            width:
-                                90,
-
-                            child:
-                                Column(
-
-                              children: [
-
-                                NetworkImageBox(
-
-                                  url:
-                                      category.image,
-
-                                  height:
-                                      72,
-
-                                  width:
-                                      72,
-
-                                  fit:
-                                      BoxFit.contain,
-
-                                  radius:
-                                      36,
-                                ),
-
-
-                                const SizedBox(
-                                  height: 7,
-                                ),
-
-
-                                Text(
-
-                                  category.name,
-
-                                  maxLines:
-                                      1,
-
-                                  overflow:
-                                      TextOverflow.ellipsis,
-
-                                  textAlign:
-                                      TextAlign.center,
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-
-
-
-                const SizedBox(height: 22),
-
-
-
-                SectionTitle(
-
-                  title:
-                      'جدیدترین محصولات',
-
-                  onSeeAll: () {
-
-                    Navigator.pushNamed(
-                      context,
-                      AppRoutes.products,
-                    );
-                  },
-                ),
-
-
-
-                const SizedBox(height: 10),
-
-
-
-                if (data.products.isEmpty)
-
-                  const EmptyState(
-                    message:
-                        'محصولی برای نمایش وجود ندارد',
-                  )
-
-                else
-
-                  LayoutBuilder(
-
-                    builder:
-                        (context, constraints) {
-
-
-                      final count =
-                          constraints.maxWidth >= 1000
-                              ? 5
-                              : constraints.maxWidth >= 750
-                                  ? 4
-                                  : constraints.maxWidth >= 520
-                                      ? 3
-                                      : 2;
-
-
-                      return GridView.builder(
-
-                        shrinkWrap:
-                            true,
-
-                        physics:
-                            const NeverScrollableScrollPhysics(),
-
-                        itemCount:
-                            data.products.length,
-
-
-                        gridDelegate:
-
-                            SliverGridDelegateWithFixedCrossAxisCount(
-
-                          crossAxisCount:
-                              count,
-
-                          childAspectRatio:
-                              .62,
-
-                          crossAxisSpacing:
-                              10,
-
-                          mainAxisSpacing:
-                              10,
-                        ),
-
-
-                        itemBuilder:
-                            (context, index) {
-
-                          final product =
-                              data.products[index];
-
-
-                          return ProductCard(
-
-                            product:
-                                product,
-
-
-                            onTap: () {
-
-                              Navigator.pushNamed(
-
-                                context,
-
-                                AppRoutes.productDetail,
-
-                                arguments:
-                                    product.id,
-                              );
-                            },
-                          );
-                        },
-                      );
-                    },
-                  ),
-              ],
-            );
-          },
-        ),
       ),
     );
   }
