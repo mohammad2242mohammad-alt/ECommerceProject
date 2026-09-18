@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/routes/app_routes.dart';
 import '../../../data/models/home_model.dart';
 import '../../../data/models/product_model.dart';
-import '../../../shared/widgets/store_widgets.dart';
+import '../../../shared/widgets/shared_widgets.dart';
 import 'product_card.dart';
 
 class ProductSearchBar extends StatelessWidget {
