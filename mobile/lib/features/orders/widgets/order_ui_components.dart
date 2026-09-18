@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../data/models/order_model.dart';
-import '../../../shared/widgets/store_widgets.dart';
+import '../../../shared/widgets/shared_widgets.dart';
 
 class OrdersLoginRequired extends StatelessWidget {
   const OrdersLoginRequired({super.key, required this.onLogin});
