@@ -68,7 +68,7 @@ class StoreRepository {
   Future<AuthSession> _auth(String endpoint, String phone, String password, {String? confirmation}) async {
     final data = asMap((await _api.post<dynamic>(endpoint, body: {
       'phone': phone.trim(), 'password': password,
-      if (confirmation != null) 'password_confirmation': confirmation,
+      'password_confirmation': ?confirmation,
     })).data);
     final session = AuthSession(user: UserModel.fromJson(asMap(data['user'])), token: data['token']?.toString() ?? '');
     await _storage.write('auth_token', session.token);
@@ -88,7 +88,7 @@ class StoreRepository {
 
   Future<CartModel?> addToCart({required int productId, int? variantId, int quantity = 1}) async {
     final data = (await _api.post<dynamic>(ApiConstants.cartItems, body: {
-      'product_id': productId, if (variantId != null) 'variant_id': variantId, 'quantity': quantity,
+      'product_id': productId, 'variant_id': ?variantId, 'quantity': quantity,
     })).data;
     return data == null ? null : CartModel.fromJson(asMap(data));
   }
