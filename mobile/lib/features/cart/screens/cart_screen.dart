@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/routes/app_routes.dart';
 import '../../../providers/store_providers.dart';
-import '../../../shared/widgets/store_widgets.dart';
+import '../../../shared/widgets/shared_widgets.dart';
 import '../widgets/cart_ui_components.dart';
 
 class CartScreen extends ConsumerWidget {
