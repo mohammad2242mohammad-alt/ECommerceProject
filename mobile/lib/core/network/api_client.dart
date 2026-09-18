@@ -8,9 +8,8 @@ import '../storage/local_storage.dart';
 import 'models/api_response.dart';
 
 class ApiClient {
-  ApiClient({http.Client? client, LocalStorage? storage})
-      : _client = client ?? http.Client(),
-        _storage = storage;
+  ApiClient({http.Client? client, LocalStorage? this._storage})
+      : _client = client ?? http.Client();
 
   final http.Client _client;
   final LocalStorage? _storage;
