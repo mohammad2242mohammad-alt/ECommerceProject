@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../data/models/address_model.dart';
-import '../../../shared/widgets/store_widgets.dart';
+import '../../../shared/widgets/shared_widgets.dart';
 
 class AddressListItem extends StatelessWidget {
   const AddressListItem({super.key, required this.address, required this.selectMode, required this.onSelect, required this.onEdit, required this.onDelete});
