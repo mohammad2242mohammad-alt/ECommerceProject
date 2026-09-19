@@ -90,10 +90,13 @@ class _LayoutEngineState extends State<LayoutEngine> {
   Widget build(BuildContext context) {
     return Focus(
       focusNode: _focusNode,
+      autofocus: true,
       onKeyEvent: _handleKey,
-      child: GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onTap: () => _focusNode.requestFocus(),
+      child: ScrollConfiguration(
+        behavior: const MaterialScrollBehavior().copyWith(
+          scrollbars: true,
+          overscroll: true,
+        ),
         child: ListView.separated(
           controller: _controller,
           padding: widget.padding,
@@ -101,7 +104,9 @@ class _LayoutEngineState extends State<LayoutEngine> {
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           physics: widget.shrinkWrap
               ? const NeverScrollableScrollPhysics()
-              : const AlwaysScrollableScrollPhysics(),
+              : const ClampingScrollPhysics(
+                  parent: AlwaysScrollableScrollPhysics(),
+                ),
           itemCount: widget.sections.length,
           separatorBuilder: (_, __) => const SizedBox.shrink(),
           itemBuilder: (_, index) => widget.sections[index],
