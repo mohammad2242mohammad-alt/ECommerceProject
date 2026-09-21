@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../providers/product_provider.dart';
@@ -49,22 +49,37 @@ class ProductSection extends ConsumerWidget {
               );
             }
 
-            return GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: products.length,
-              gridDelegate:
-                  const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.65,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-              ),
-              itemBuilder: (context, index) {
-                final product = products[index];
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                final width = constraints.maxWidth;
 
-                return ProductCard(
-                  product: product,
+                final columns = width >= 1200
+                    ? 6
+                    : width >= 900
+                        ? 5
+                        : width >= 650
+                            ? 4
+                            : width >= 450
+                                ? 3
+                                : 2;
+
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: products.length,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: columns,
+                    childAspectRatio: 0.65,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                  ),
+                  itemBuilder: (context, index) {
+                    final product = products[index];
+
+                    return ProductCard(
+                      product: product,
+                    );
+                  },
                 );
               },
             );
