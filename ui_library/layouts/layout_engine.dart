@@ -93,25 +93,35 @@ class _LayoutEngineState extends State<LayoutEngine> {
       focusNode: _focusNode,
       autofocus: true,
       onKeyEvent: _handleKey,
-      child: Scrollbar(
-        controller: _controller,
-        thumbVisibility: true,
-        trackVisibility: true,
-        interactive: true,
-        notificationPredicate: (notification) => notification.depth == 0,
-        child: ListView.separated(
+      child: ScrollConfiguration(
+        behavior: const MaterialScrollBehavior().copyWith(
+          scrollbars: false,
+          overscroll: true,
+        ),
+        child: RawScrollbar(
           controller: _controller,
-          padding: widget.padding,
-          shrinkWrap: widget.shrinkWrap,
-          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          physics: widget.shrinkWrap
-              ? const NeverScrollableScrollPhysics()
-              : const ClampingScrollPhysics(
-                  parent: AlwaysScrollableScrollPhysics(),
-                ),
-          itemCount: widget.sections.length,
-          separatorBuilder: (_, __) => const SizedBox.shrink(),
-          itemBuilder: (_, index) => widget.sections[index],
+          thumbVisibility: true,
+          trackVisibility: true,
+          interactive: true,
+          scrollbarOrientation: ScrollbarOrientation.right,
+          thickness: 10,
+          radius: const Radius.circular(8),
+          minThumbLength: 40,
+          notificationPredicate: (notification) => notification.depth == 0,
+          child: ListView.separated(
+            controller: _controller,
+            padding: widget.padding,
+            shrinkWrap: widget.shrinkWrap,
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            physics: widget.shrinkWrap
+                ? const NeverScrollableScrollPhysics()
+                : const ClampingScrollPhysics(
+                    parent: AlwaysScrollableScrollPhysics(),
+                  ),
+            itemCount: widget.sections.length,
+            separatorBuilder: (_, __) => const SizedBox.shrink(),
+            itemBuilder: (_, index) => widget.sections[index],
+          ),
         ),
       ),
     );
