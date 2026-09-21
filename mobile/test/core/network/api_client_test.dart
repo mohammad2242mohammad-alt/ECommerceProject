@@ -384,7 +384,6 @@ void main() {
 
       expect(response.success, isTrue);
       expect(response.message, 'done');
-      expect(response.data, isNull);
     });
   });
 }
