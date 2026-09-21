@@ -31,6 +31,149 @@ class StoreContractTest extends TestCase
             ->assertJsonMissingPath('data.user.password');
     }
 
+
+    public function test_registration_rejects_a_password_shorter_than_six_characters(): void
+    {
+        $response = $this->postJson('/api/auth/register', [
+            'phone' => '09123334456',
+            'password' => '12345',
+            'password_confirmation' => '12345',
+        ]);
+
+        $response
+            ->assertStatus(422)
+            ->assertJsonPath('success', false)
+            ->assertJsonStructure(['success', 'message', 'errors']);
+    }
+
+    public function test_registration_rejects_mismatched_password_confirmation(): void
+    {
+        $response = $this->postJson('/api/auth/register', [
+            'phone' => '09123334457',
+            'password' => 'secret123',
+            'password_confirmation' => 'different123',
+        ]);
+
+        $response
+            ->assertStatus(422)
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('errors.password.0', fn ($value) => is_string($value));
+    }
+
+    public function test_registration_rejects_duplicate_phone(): void
+    {
+        User::factory()->create([
+            'phone' => '09123334458',
+        ]);
+
+        $response = $this->postJson('/api/auth/register', [
+            'phone' => '09123334458',
+            'password' => 'secret123',
+            'password_confirmation' => 'secret123',
+        ]);
+
+        $response
+            ->assertStatus(422)
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('errors.phone.0', fn ($value) => is_string($value));
+    }
+
+    public function test_login_matches_the_api_contract(): void
+    {
+        User::factory()->create([
+            'phone' => '09123334459',
+            'password' => 'password',
+            'is_active' => true,
+        ]);
+
+        $response = $this->postJson('/api/auth/login', [
+            'phone' => '09123334459',
+            'password' => 'password',
+        ]);
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonStructure([
+                'success',
+                'message',
+                'data' => ['user', 'token'],
+            ])
+            ->assertJsonMissingPath('data.user.password');
+    }
+
+    public function test_login_rejects_invalid_credentials(): void
+    {
+        User::factory()->create([
+            'phone' => '09123334460',
+            'password' => 'password',
+        ]);
+
+        $this->postJson('/api/auth/login', [
+            'phone' => '09123334460',
+            'password' => 'wrong-password',
+        ])
+            ->assertStatus(401)
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('message', 'Invalid phone or password');
+    }
+
+    public function test_login_rejects_inactive_user(): void
+    {
+        User::factory()->create([
+            'phone' => '09123334461',
+            'password' => 'password',
+            'is_active' => false,
+        ]);
+
+        $this->postJson('/api/auth/login', [
+            'phone' => '09123334461',
+            'password' => 'password',
+        ])
+            ->assertStatus(403)
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('message', 'User account is inactive');
+    }
+
+    public function test_authenticated_user_can_read_me(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user, 'sanctum')
+            ->getJson('/api/auth/me')
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonStructure([
+                'success',
+                'message',
+                'data' => ['user'],
+            ])
+            ->assertJsonMissingPath('data.user.password');
+    }
+
+    public function test_me_requires_authentication(): void
+    {
+        $this->getJson('/api/auth/me')
+            ->assertUnauthorized();
+    }
+
+    public function test_logout_revokes_the_current_token(): void
+    {
+        $user = User::factory()->create();
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        $this->withToken($token)
+            ->postJson('/api/auth/logout')
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data', null);
+
+        $this->withToken($token)
+            ->getJson('/api/auth/me')
+            ->assertUnauthorized();
+    }
+
     public function test_authenticated_customer_can_clear_the_cart(): void
     {
         $user = User::factory()->create();
