@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// Reusable page layout engine: sections are built once and can be reordered
 /// by passing a different section list. Keep business/data logic outside.
@@ -92,11 +93,12 @@ class _LayoutEngineState extends State<LayoutEngine> {
       focusNode: _focusNode,
       autofocus: true,
       onKeyEvent: _handleKey,
-      child: ScrollConfiguration(
-        behavior: const MaterialScrollBehavior().copyWith(
-          scrollbars: true,
-          overscroll: true,
-        ),
+      child: Scrollbar(
+        controller: _controller,
+        thumbVisibility: true,
+        trackVisibility: true,
+        interactive: true,
+        notificationPredicate: (notification) => notification.depth == 0,
         child: ListView.separated(
           controller: _controller,
           padding: widget.padding,
